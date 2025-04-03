@@ -8,10 +8,10 @@ async function executeQuery(pool, query) {
   let connection;
   try {
     connection = await pool.getConnection();
-    const [results, ] = await connection.execute(query);
+    const [results] = await connection.execute(query);
     console.log(results);
   } catch (error) {
-    console.error('Error executing query:', error);
+    console.error("Error executing query:", error);
   } finally {
     await sleep(2000);
     if (connection) connection.release();
@@ -19,29 +19,16 @@ async function executeQuery(pool, query) {
 }
 
 const queries = [
-  `SET FOREIGN_KEY_CHECKS = 0;`, // 🔹 Desactiva restricciones de clave foránea
-  `DROP TABLE IF EXISTS ciudad;`,
-  `DROP TABLE IF EXISTS departamento;`,
-  `SET FOREIGN_KEY_CHECKS = 1;`, // 🔹 Reactiva restricciones de clave foránea
-
-  `CREATE TABLE departamento (
-    id TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
-    nom VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `CREATE TABLE IF NOT EXISTS api_users (
+    id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    api_user VARCHAR(60) NOT NULL,
+    api_password VARCHAR(255) NOT NULL,
+    api_role ENUM('Admin', 'Read-only') NOT NULL,
+    api_status ENUM('Active', 'Inactive') NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY nom (nom)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`,
-
-  `CREATE TABLE ciudad (
-    id SMALLINT(6) UNSIGNED NOT NULL AUTO_INCREMENT,
-    nom VARCHAR(50) NOT NULL,
-    departamentoid TINYINT(3) UNSIGNED NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY departamentoid (departamentoid),
-    CONSTRAINT ciudad_departamento FOREIGN KEY (departamentoid) REFERENCES departamento (id) ON DELETE CASCADE
+    UNIQUE KEY api_user (api_user)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;`
 ];
 

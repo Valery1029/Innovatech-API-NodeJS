@@ -1,22 +1,15 @@
 CREATE DATABASE IF NOT EXISTS innovatechdb;
 USE innovatechdb;
 
-CREATE TABLE departamento (
-  id TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
-  nom VARCHAR(50) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+DROP TABLE IF EXISTS api_users;
+CREATE TABLE IF NOT EXISTS api_users (
+  id int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  api_user varchar(60) NOT NULL,
+  api_password varchar(255) NOT NULL,
+  api_role enum('Admin','Read-only') NOT NULL,
+  api_status enum('Active','Inactive') NOT NULL,
+  created_at timestamp NOT NULL DEFAULT current_timestamp(),
+  updated_at timestamp NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY nom (nom)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE ciudad (
-  id SMALLINT(6) UNSIGNED NOT NULL AUTO_INCREMENT,
-  nom VARCHAR(50) NOT NULL,
-  departamentoid TINYINT(3) UNSIGNED NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  KEY departamentoid (departamentoid),
-  CONSTRAINT ciudad_departamento FOREIGN KEY (departamentoid) REFERENCES departamento (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  UNIQUE KEY api_user (api_user)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
