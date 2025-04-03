@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS innovatech_prueba;
-USE innovatech_prueba;
+CREATE DATABASE IF NOT EXISTS innovatechdb;
+USE innovatechdb;
 
 CREATE TABLE departamento (
   id TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
