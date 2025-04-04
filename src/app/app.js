@@ -25,6 +25,15 @@ import modelosRolRoutes from '../routes/modelosRol.routes.js';
 import permisosModelosRolRoutes from '../routes/permisosModelosRol.routes.js';
 import productosRoutes from '../routes/productos.routes.js';
 import envioRoutes from '../routes/envio.routes.js';
+import ingresoProductoRoutes from '../routes/ingresoProducto.routes.js';
+import ofertasRoutes from '../routes/ofertas.routes.js';
+import pedidoRoutes from '../routes/pedido.routes.js';
+import pqrsRoutes from '../routes/pqrs.routes.js';
+import productosIngresoProductosRoutes from '../routes/productosIngresoProducto.routes.js';
+import productosPedidoRoutes from '../routes/productosPedido.routes.js';
+import facturaRoutes from '../routes/factura.routes.js';
+import facturaEnvioRoutes from '../routes/facturaEnvio.routes.js';
+import salidaProductoRoutes from '../routes/salidaProducto.routes.js';
 
 const app = express();
 //Middleware
@@ -56,6 +65,15 @@ app.use('/api_v1', modelosRolRoutes);
 app.use('/api_v1', permisosModelosRolRoutes);
 app.use('/api_v1', productosRoutes);
 app.use('/api_v1', envioRoutes);
+app.use('/api_v1', ingresoProductoRoutes);
+app.use('/api_v1', ofertasRoutes);
+app.use('/api_v1', pedidoRoutes);
+app.use('/api_v1', pqrsRoutes);
+app.use('/api_v1', productosIngresoProductosRoutes);
+app.use('/api_v1', productosPedidoRoutes);
+app.use('/api_v1', facturaRoutes);
+app.use('/api_v1', facturaEnvioRoutes);
+app.use('/api_v1', salidaProductoRoutes);
 
 app.use((rep, res, nex) => {
   res.status(404).json ({
