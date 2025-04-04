@@ -2,9 +2,9 @@ import { connect } from '../config/db/connect.js';
 import bcrypt from 'bcrypt';
 
 // GET
-export const showApiUser = async (req, res) => {
+export const showApiUsers = async (req, res) => {
   try {
-    const sqlQuery = "SELECT * FROM api_users";
+    let sqlQuery = "SELECT * FROM api_users";
     const [result] = await connect.query(sqlQuery);
     res.status(200).json(result);
   } catch (error) {
@@ -15,7 +15,8 @@ export const showApiUser = async (req, res) => {
 // GET BY ID
 export const showApiUserId = async (req, res) => {
   try {
-    const [result] = await connect.query ("SELECT * FROM api_users WHERE id = ?", [req.params.id]);
+    const [result] = await connect.query("SELECT * FROM api_users WHERE id = ?", [req.params.id]);
+
     if (result.length === 0) return res.status(404).json({ error: "API user not found" });
     res.status(200).json(result[0]);
   } catch (error) {
@@ -27,15 +28,14 @@ export const showApiUserId = async (req, res) => {
 export const addApiUser = async (req, res) => {
   try {
     const { user, password, role, status } = req.body;
+
     if (!user || !password || !role || !status) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    const hashedPassword = await encryptPassword(password);
-
     let sqlQuery = "INSERT INTO api_users (api_user, api_password, api_role, api_status) VALUES (?, ?, ?, ?)";
-    const [result] = await connect.query(sqlQuery, [user, hashedPassword, role, status]);
+    const [result] = await connect.query(sqlQuery, [user, password, role, status]);
     res.status(201).json({
-      data: [{ id: result.insertId, user, hashedPassword, role, status }],
+      data: { id: result.insertId, user, role, status },
       status: 201
     });
   } catch (error) {
@@ -47,13 +47,18 @@ export const addApiUser = async (req, res) => {
 export const updateApiUser = async (req, res) => {
   try {
     const { user, password, role, status } = req.body;
-    if (!user && !password && !role && !status) {
+
+    if (!user || !password || !role || !status) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    let sqlQuery = "UPDATE  api_users SET api_user=?, api_password=?, api_role =?, api_status=?, updated_at=? WHERE id= ?";
+
+    let sqlQuery = "UPDATE api_users SET api_user = ?, api_password = ?, api_role = ?, api_status = ?, updated_at = ? WHERE id = ?";
     const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
+    const [result] = await connect.query(sqlQuery, [user, password, role, status, updated_at, req.params.id]);
+
+    if (result.affectedRows === 0) return res.status(404).json({ error: "API user not found" });
     res.status(200).json({
-      data: [{ user, role, status, updated_at }],
+      data: { user, role, status, updated_at },
       status: 200,
       updated: result.affectedRows
     });
@@ -67,14 +72,15 @@ export const deleteApiUser = async (req, res) => {
   try {
     let sqlQuery = "DELETE FROM api_users WHERE id = ?";
     const [result] = await connect.query(sqlQuery, [req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: "user not found" });
+
+    if (result.affectedRows === 0) return res.status(404).json({ error: "API user not found" });
     res.status(200).json({
       data: [],
       status: 200,
       deleted: result.affectedRows
     });
   } catch (error) {
-    res.status(500).json({ error: "Error deleting user", details: error.message });
+    res.status(500).json({ error: "Error deleting API user", details: error.message });
   }
 };
 
