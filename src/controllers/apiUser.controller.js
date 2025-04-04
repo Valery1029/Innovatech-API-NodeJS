@@ -1,5 +1,6 @@
 import { connect } from '../config/db/connect.js';
-import bcrypt from 'bcrypt';
+import {encryptPassword, comparePassword} from '../library/appBcrypt.js';
+import jwt from 'jsonwebtoken';
 
 // GET
 export const showApiUsers = async (req, res) => {
@@ -32,10 +33,12 @@ export const addApiUser = async (req, res) => {
     if (!user || !password || !role || !status) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    const hashedPassword = await encryptPassword(password);
+
     let sqlQuery = "INSERT INTO api_users (api_user, api_password, api_role, api_status) VALUES (?, ?, ?, ?)";
-    const [result] = await connect.query(sqlQuery, [user, password, role, status]);
+    const [result] = await connect.query(sqlQuery, [user, hashedPassword, role, status]);
     res.status(201).json({
-      data: { id: result.insertId, user, role, status },
+      data: { id: result.insertId, user, hashedPassword, role, status },
       status: 201
     });
   } catch (error) {
@@ -90,16 +93,18 @@ export const loginApiUser = async (req, res) => {
     const { api_user, api_password } = req.body;
     let sqlQuery = "SELECT * FROM api_users WHERE api_user= ?";
     const [result] = await connect.query(sqlQuery, api_user);
-    await connect.end();
+    //await connect.end();
     if (result.length === 0) return res.status(400).json({ error: "user not found" });
+
     const user = result[0];
-    const validPassword = await comparePassword(api_password, user.Api_password);
+
+    const validPassword = await comparePassword(api_password, user.api_password);
     if (!validPassword) return res.status(400).json({ error: "Incorrect password" });
     const token = jwt.sign({ id: user.id, role: user.api_role, status: user.api_status }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ error: "Error deleting user", details: error.message });
+    res.status(500).json({ error: "Error login user", details: error.message });
   }
 };

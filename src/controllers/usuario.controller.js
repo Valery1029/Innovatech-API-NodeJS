@@ -1,4 +1,5 @@
 import { connect } from '../config/db/connect.js';
+import {encryptPassword} from '../library/appBcrypt.js';
 
 // GET
 export const showUsuarios = async (req, res) => {
@@ -26,19 +27,18 @@ export const showUsuarioId = async (req, res) => {
 // POST
 export const addUsuario = async (req, res) => {
   try {
-    const {
-      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id
-    } = req.body;
-
+    const { primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id } = req.body;
     if (!primer_nombre || !primer_apellido || !documento || !correo || !telefono1 || !direccion || !usuario || !password || !tipo_documento_id || !ciudad_id || !rol_id || !estado_usuario_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    const hashedPassword = await encryptPassword(password);
+
     let sqlQuery = "INSERT INTO usuario (primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     const [result] = await connect.query(sqlQuery, [
-      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id
+      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, hashedPassword, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id
     ]);
     res.status(201).json({
-      data: { id_usuario: result.insertId, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id },
+      data: { id_usuario: result.insertId, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, hashedPassword, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id },
       status: 201
     });
   } catch (error) {
@@ -50,22 +50,22 @@ export const addUsuario = async (req, res) => {
 export const updateUsuario = async (req, res) => {
   try {
     const {
-      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id
+      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id
     } = req.body;
 
-    if (!primer_nombre || !primer_apellido || !documento || !correo || !telefono1 || !direccion || !usuario || !password || !tipo_documento_id || !ciudad_id || !rol_id || !estado_usuario_id) {
+    if (!primer_nombre || !primer_apellido || !documento || !correo || !telefono1 || !direccion || !usuario || !tipo_documento_id || !ciudad_id || !rol_id || !estado_usuario_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    let sqlQuery = "UPDATE usuario SET primer_nombre = ?, segundo_nombre = ?, primer_apellido = ?, segundo_apellido = ?, documento = ?, correo = ?, telefono1 = ?, telefono2 = ?, direccion = ?, usuario = ?, password = ?, tipo_documento_id = ?, ciudad_id = ?, rol_id = ?, estado_usuario_id = ?, updated_at = ? WHERE id_usuario = ?";
+    let sqlQuery = "UPDATE usuario SET primer_nombre = ?, segundo_nombre = ?, primer_apellido = ?, segundo_apellido = ?, documento = ?, correo = ?, telefono1 = ?, telefono2 = ?, direccion = ?, usuario = ?, tipo_documento_id = ?, ciudad_id = ?, rol_id = ?, estado_usuario_id = ?, updated_at = ? WHERE id_usuario = ?";
     const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
     const [result] = await connect.query(sqlQuery, [
-      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id, updated_at, req.params.id
+      primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id, updated_at, req.params.id
     ]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "Usuario not found" });
     res.status(200).json({
-      data: { primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, password, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id, updated_at },
+      data: { primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, documento, correo, telefono1, telefono2, direccion, usuario, tipo_documento_id, ciudad_id, rol_id, estado_usuario_id, updated_at },
       status: 200,
       updated: result.affectedRows
     });
