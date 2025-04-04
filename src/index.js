@@ -1,11 +1,10 @@
-import express from 'express';
-import departamentoRoutes from './routes/departamento.routes.js';
+import app from './app/app.js';
+import dotenv from 'dotenv';
 
-const app = express();
+dotenv.config({path: '../env'});
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-
-app.use('/api_v1', departamentoRoutes);
-
-app.listen(PORT, () => console.log('Server running... on port' + PORT));
+//Inicializar el server
+app.listen(PORT, () => {
+  console.log(`Server running... on port ${PORT}`);
+});

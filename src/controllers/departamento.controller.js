@@ -1,4 +1,4 @@
-import { connect } from '../../db/connect.js';
+import { connect } from '../config/db/connect.js';
 
 // GET
 export const showDepartamentos = async (req, res) => {
