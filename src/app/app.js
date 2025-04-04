@@ -15,6 +15,16 @@ import estadoFacturaRoutes from '../routes/estadoFactura.routes.js';
 import estadoPqrsRoutes from '../routes/estadoPqrs.routes.js';
 import estadoProductoRoutes from '../routes/estadoProducto.routes.js';
 import garantiaRoutes from '../routes/garantia.routes.js';
+import marcaRoutes from '../routes/marca.routes.js';
+import modelosRoutes from '../routes/modelos.routes.js';
+import permisosRoutes from '../routes/permisos.routes.js';
+import resolucionRoutes from '../routes/resolucion.routes.js';
+import sistemaOperativoRoutes from '../routes/so.routes.js';
+import tipoPqrsRoutes from '../routes/tipoPqrs.routes.js';
+import modelosRolRoutes from '../routes/modelosRol.routes.js';
+import permisosModelosRolRoutes from '../routes/permisosModelosRol.routes.js';
+import productosRoutes from '../routes/productos.routes.js';
+import envioRoutes from '../routes/envio.routes.js';
 
 const app = express();
 //Middleware
@@ -36,6 +46,16 @@ app.use('/api_v1', estadoFacturaRoutes);
 app.use('/api_v1', estadoPqrsRoutes);
 app.use('/api_v1', estadoProductoRoutes);
 app.use('/api_v1', garantiaRoutes);
+app.use('/api_v1', marcaRoutes);
+app.use('/api_v1', modelosRoutes);
+app.use('/api_v1', permisosRoutes);
+app.use('/api_v1', resolucionRoutes);
+app.use('/api_v1', sistemaOperativoRoutes);
+app.use('/api_v1', tipoPqrsRoutes);
+app.use('/api_v1', modelosRolRoutes);
+app.use('/api_v1', permisosModelosRolRoutes);
+app.use('/api_v1', productosRoutes);
+app.use('/api_v1', envioRoutes);
 
 app.use((rep, res, nex) => {
   res.status(404).json ({
