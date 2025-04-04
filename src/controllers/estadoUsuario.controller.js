@@ -26,15 +26,15 @@ export const showEstadoUsuarioId = async (req, res) => {
 // POST
 export const addEstadoUsuario = async (req, res) => {
   try {
-    const { Nombre, Descripción } = req.body;
+    const { nom, descripcion } = req.body;
 
-    if (!Nombre) {
+    if (!nom || !descripcion) {
       return res.status(400).json({ error: "Missing required field: Nombre" });
     }
     let sqlQuery = "INSERT INTO estado_usuario (Nombre, Descripción) VALUES (?, ?)";
-    const [result] = await connect.query(sqlQuery, [Nombre, Descripción]);
+    const [result] = await connect.query(sqlQuery, [nom, descripcion]);
     res.status(201).json({
-      data: { id: result.insertId, Nombre, Descripción },
+      data: { id: result.insertId, nom, descripcion },
       status: 201
     });
   } catch (error) {
@@ -45,19 +45,19 @@ export const addEstadoUsuario = async (req, res) => {
 // PUT
 export const updateEstadoUsuario = async (req, res) => {
   try {
-    const { Nombre, Descripción } = req.body;
+    const { nom, descripcion } = req.body;
 
-    if (!Nombre) {
+    if (!nom || !descripcion) {
       return res.status(400).json({ error: "Missing required field: Nombre" });
     }
 
     let sqlQuery = "UPDATE estado_usuario SET Nombre = ?, Descripción = ?, updated_at = ? WHERE id = ?";
     const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
-    const [result] = await connect.query(sqlQuery, [Nombre, Descripción, updated_at, req.params.id]);
+    const [result] = await connect.query(sqlQuery, [nom, descripcion, updated_at, req.params.id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "Estado de usuario not found" });
     res.status(200).json({
-      data: { Nombre, Descripción, updated_at },
+      data: { nom, descripcion, updated_at },
       status: 200,
       updated: result.affectedRows
     });

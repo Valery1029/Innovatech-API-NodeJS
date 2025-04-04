@@ -28,7 +28,7 @@ export const addRol = async (req, res) => {
   try {
     const { nom, descripcion } = req.body;
 
-    if (!nom) {
+    if (!nom || !descripcion) {
       return res.status(400).json({ error: "Missing required field: nom" });
     }
     let sqlQuery = "INSERT INTO rol (nom, descripcion) VALUES (?, ?)";
@@ -47,7 +47,7 @@ export const updateRol = async (req, res) => {
   try {
     const { nom, descripcion } = req.body;
 
-    if (!nom) {
+    if (!nom || !descripcion) {
       return res.status(400).json({ error: "Missing required field: nom" });
     }
 

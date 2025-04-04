@@ -1,11 +1,11 @@
 import { Router } from "express"; 
-import { showApiUser, showApiUserId, addApiUser, updateApiUser, deleteApiUser } from '../controllers/apiUser.controller.js'; 
+import { showApiUsers, showApiUserId, addApiUser, updateApiUser, deleteApiUser } from '../controllers/apiUser.controller.js'; 
 
 const router = Router();
 const apiName = '/apiUser';
 
 router.route(apiName)
-  .get(showApiUser)
+  .get(showApiUsers)
   .post(addApiUser);
 
 router.route(`${apiName}/:id`)
