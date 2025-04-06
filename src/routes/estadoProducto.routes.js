@@ -5,7 +5,7 @@ import {
   addEstadoProducto,
   updateEstadoProducto,
   deleteEstadoProducto
-} from '../controllers/estadoProducto.controller';
+} from '../controllers/estadoProducto.controller.js';
 
 const router = Router();
 const apiName = '/estadoProducto';

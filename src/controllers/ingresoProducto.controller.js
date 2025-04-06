@@ -49,10 +49,10 @@ export const addIngresoProducto = async (req, res) => {
 // PUT
 export const updateIngresoProducto = async (req, res) => {
   try {
-    const { id, factura, usuario_id } = req.body;
+    const { factura, usuario_id } = req.body;
 
-    if (!id || !factura || !usuario_id) {
-      return res.status(400).json({ error: "Missing required fields: id, factura, usuario_id" });
+    if (!factura || !usuario_id) {
+      return res.status(400).json({ error: "Missing required fields: factura, usuario_id" });
     }
 
     const sqlQuery = "UPDATE ingreso_producto SET factura = ?, usuario_id = ?, updated_at = ? WHERE id = ?";

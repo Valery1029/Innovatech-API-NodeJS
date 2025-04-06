@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   showProductosIngresoProducto,
-  showProductosIngresoProductoId,
+  showProductosIngresoProductoIngresoId,
   addProductosIngresoProducto,
   updateProductosIngresoProducto,
   deleteProductosIngresoProducto
@@ -15,12 +15,8 @@ router.route(apiName)
   .post(addProductosIngresoProducto)
   .put(updateProductosIngresoProducto);
 
-// Usamos ambos parámetros en el DELETE
-router.route(`${apiName}/:ProductosId_Producto/:Ingreso_productoid_ingreso`)
+router.route(`${apiName}/:id`)
+  .get(showProductosIngresoProductoIngresoId)
   .delete(deleteProductosIngresoProducto);
-
-// GET por ID de ingreso
-router.route(`${apiName}/:Ingreso_productoid_ingreso`)
-  .get(showProductosIngresoProductoId);
 
 export default router;

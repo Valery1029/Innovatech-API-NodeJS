@@ -27,23 +27,23 @@ export const showFacturaId = async (req, res) => {
 // POST
 export const addFactura = async (req, res) => {
   try {
-    const { valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid } = req.body;
+    const { valortl, metodopago, estado_factura_id, Pedidoid } = req.body;
 
-    if (!valortl || !metodopago || !Estado_facturaId_Estado_factura || !Pedidoid) {
+    if (!valortl || !metodopago || !estado_factura_id || !Pedidoid) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const fecha = new Date().toISOString().slice(0, 19).replace('T', ' ');
     const created_at = fecha;
 
-    const sqlQuery = `INSERT INTO factura (fecha, valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+    const sqlQuery = `INSERT INTO factura (fecha, valortl, metodopago, estado_factura_id, Pedidoid, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
 
     const [result] = await connect.query(sqlQuery, [
-      fecha, valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid, created_at
+      fecha, valortl, metodopago, estado_factura_id, Pedidoid, created_at
     ]);
 
     res.status(201).json({
-      data: { id: result.insertId, valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid, created_at },
+      data: { id: result.insertId, valortl, metodopago, estado_factura_id, Pedidoid, created_at },
       status: 201
     });
   } catch (error) {
@@ -54,25 +54,25 @@ export const addFactura = async (req, res) => {
 // PUT
 export const updateFactura = async (req, res) => {
   try {
-    const { id, valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid } = req.body;
+    const { id, valortl, metodopago, estado_factura_id, Pedidoid } = req.body;
 
-    if (!id || !valortl || !metodopago || !Estado_facturaId_Estado_factura || !Pedidoid) {
+    if (!id || !valortl || !metodopago || !estado_factura_id || !Pedidoid) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
     const fecha = updated_at;
 
-    const sqlQuery = `UPDATE factura SET fecha = ?, valortl = ?, metodopago = ?, Estado_facturaId_Estado_factura = ?, Pedidoid = ?, updated_at = ? WHERE id = ?`;
+    const sqlQuery = `UPDATE factura SET fecha = ?, valortl = ?, metodopago = ?, estado_factura_id = ?, Pedidoid = ?, updated_at = ? WHERE id = ?`;
 
     const [result] = await connect.query(sqlQuery, [
-      fecha, valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid, updated_at, id
+      fecha, valortl, metodopago, estado_factura_id, Pedidoid, updated_at, id
     ]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "Factura not found" });
 
     res.status(200).json({
-      data: { id, valortl, metodopago, Estado_facturaId_Estado_factura, Pedidoid, updated_at },
+      data: { id, valortl, metodopago, estado_factura_id, Pedidoid, updated_at },
       status: 200,
       updated: result.affectedRows
     });

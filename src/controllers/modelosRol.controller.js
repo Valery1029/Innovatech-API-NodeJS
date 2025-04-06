@@ -1,6 +1,6 @@
 import { connect } from '../config/db/connect.js';
 
-// GET
+// GET ALL
 export const showModelosRol = async (req, res) => {
   try {
     const sqlQuery = "SELECT * FROM modelos_rol";
@@ -11,11 +11,11 @@ export const showModelosRol = async (req, res) => {
   }
 };
 
-// GET ID
+// GET BY ID
 export const showModelosRolId = async (req, res) => {
   try {
-    const sqlQuery = "SELECT * FROM modelos_rol WHERE Modelosid = ? AND Rolid = ?";
-    const [result] = await connect.query(sqlQuery, [req.params.Modelosid, req.params.Rolid]);
+    const sqlQuery = "SELECT * FROM modelos_rol WHERE id = ?";
+    const [result] = await connect.query(sqlQuery, [req.params.id]);
 
     if (result.length === 0) return res.status(404).json({ error: "modelos_rol not found" });
     res.status(200).json(result[0]);
@@ -33,12 +33,12 @@ export const addModelosRol = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields: Modelosid, Rolid" });
     }
 
-    const sqlQuery = "INSERT INTO modelos_rol (Modelosid, Rolid, created_at) VALUES (?, ?, ?)";
     const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const sqlQuery = "INSERT INTO modelos_rol (Modelosid, Rolid, created_at) VALUES (?, ?, ?)";
     const [result] = await connect.query(sqlQuery, [Modelosid, Rolid, created_at]);
 
     res.status(201).json({
-      data: { Modelosid, Rolid, created_at },
+      data: { id: result.insertId, Modelosid, Rolid, created_at },
       status: 201
     });
   } catch (error) {
@@ -55,13 +55,14 @@ export const updateModelosRol = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields: Modelosid, Rolid" });
     }
 
-    const sqlQuery = "UPDATE modelos_rol SET updated_at = ? WHERE Modelosid = ? AND Rolid = ?";
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const [result] = await connect.query(sqlQuery, [updated_at, Modelosid, Rolid]);
+    const sqlQuery = "UPDATE modelos_rol SET Modelosid = ?, Rolid = ?, updated_at = ? WHERE id = ?";
+    const [result] = await connect.query(sqlQuery, [Modelosid, Rolid, updated_at, req.params.id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "modelos_rol not found" });
+
     res.status(200).json({
-      data: { Modelosid, Rolid, updated_at },
+      data: { id: req.params.id, Modelosid, Rolid, updated_at },
       status: 200,
       updated: result.affectedRows
     });
@@ -73,10 +74,11 @@ export const updateModelosRol = async (req, res) => {
 // DELETE
 export const deleteModelosRol = async (req, res) => {
   try {
-    const sqlQuery = "DELETE FROM modelos_rol WHERE Modelosid = ? AND Rolid = ?";
-    const [result] = await connect.query(sqlQuery, [req.params.Modelosid, req.params.Rolid]);
+    const sqlQuery = "DELETE FROM modelos_rol WHERE id = ?";
+    const [result] = await connect.query(sqlQuery, [req.params.id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "modelos_rol not found" });
+
     res.status(200).json({
       data: [],
       status: 200,

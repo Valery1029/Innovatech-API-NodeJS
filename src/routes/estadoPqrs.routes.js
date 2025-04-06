@@ -5,7 +5,7 @@ import {
   addEstadoPqrs,
   updateEstadoPqrs,
   deleteEstadoPqrs
-} from '../controllers/estadoPqrs.controller';
+} from '../controllers/estadoPqrs.controller.js';
 
 const router = Router();
 const apiName = '/estadoPqrs';

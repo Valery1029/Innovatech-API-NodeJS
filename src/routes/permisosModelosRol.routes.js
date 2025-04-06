@@ -5,18 +5,18 @@ import {
   addPermisosModelosRol,
   updatePermisosModelosRol,
   deletePermisosModelosRol
-} from "../controllers/permisosModelosRol.controller.js";
+} from '../controllers/permisosModelosRol.controller.js';
 
 const router = Router();
-const apiName = "/permisosModelosRol";
+const apiName = '/permisosModelosRol';
 
 router.route(apiName)
   .get(showPermisosModelosRol)
-  .post(addPermisosModelosRol)
-  .put(updatePermisosModelosRol);
+  .post(addPermisosModelosRol);
 
-router.route(`${apiName}/:Permisosid/:Modelos_RolModelosid/:Modelos_RolRolid`)
+router.route(`${apiName}/:id`)
   .get(showPermisosModelosRolId)
+  .put(updatePermisosModelosRol)
   .delete(deletePermisosModelosRol);
 
 export default router;

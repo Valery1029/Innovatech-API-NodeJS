@@ -1,6 +1,6 @@
 import { connect } from '../config/db/connect.js';
 
-// GET
+// GET ALL
 export const showFacturaEnvio = async (req, res) => {
   try {
     const sqlQuery = "SELECT * FROM factura_envio";
@@ -11,12 +11,12 @@ export const showFacturaEnvio = async (req, res) => {
   }
 };
 
-// GET ID
+// GET BY ID
 export const showFacturaEnvioId = async (req, res) => {
   try {
-    const { FacturaId_Factura, EnvioId_Envio } = req.params;
-    const sqlQuery = "SELECT * FROM factura_envio WHERE FacturaId_Factura = ? AND EnvioId_Envio = ?";
-    const [result] = await connect.query(sqlQuery, [FacturaId_Factura, EnvioId_Envio]);
+    const { id } = req.params;
+    const sqlQuery = "SELECT * FROM factura_envio WHERE id = ?";
+    const [result] = await connect.query(sqlQuery, [id]);
 
     if (result.length === 0) return res.status(404).json({ error: "factura_envio not found" });
     res.status(200).json(result[0]);
@@ -28,18 +28,18 @@ export const showFacturaEnvioId = async (req, res) => {
 // POST
 export const addFacturaEnvio = async (req, res) => {
   try {
-    const { FacturaId_Factura, EnvioId_Envio } = req.body;
+    const { factura_id, envio_id } = req.body;
 
-    if (!FacturaId_Factura || !EnvioId_Envio) {
+    if (!factura_id || !envio_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `INSERT INTO factura_envio (FacturaId_Factura, EnvioId_Envio, created_at) VALUES (?, ?, ?)`;
-    const [result] = await connect.query(sqlQuery, [FacturaId_Factura, EnvioId_Envio, created_at]);
+    const sqlQuery = `INSERT INTO factura_envio (factura_id, envio_id, created_at) VALUES (?, ?, ?)`;
+    const [result] = await connect.query(sqlQuery, [factura_id, envio_id, created_at]);
 
     res.status(201).json({
-      data: { FacturaId_Factura, EnvioId_Envio, created_at },
+      data: { id: result.insertId, factura_id, envio_id, created_at },
       status: 201
     });
   } catch (error) {
@@ -50,19 +50,19 @@ export const addFacturaEnvio = async (req, res) => {
 // PUT
 export const updateFacturaEnvio = async (req, res) => {
   try {
-    const { FacturaId_Factura, EnvioId_Envio, newFacturaId_Factura, newEnvioId_Envio } = req.body;
+    const { id, factura_id, envio_id } = req.body;
 
-    if (!FacturaId_Factura || !EnvioId_Envio || !newFacturaId_Factura || !newEnvioId_Envio) {
+    if (!id || !factura_id || !envio_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `UPDATE factura_envio SET FacturaId_Factura = ?, EnvioId_Envio = ?, updated_at = ? WHERE FacturaId_Factura = ? AND EnvioId_Envio = ?`;
-    const [result] = await connect.query(sqlQuery, [newFacturaId_Factura, newEnvioId_Envio, updated_at, FacturaId_Factura, EnvioId_Envio]);
+    const sqlQuery = `UPDATE factura_envio SET factura_id = ?, envio_id = ?, updated_at = ? WHERE id = ?`;
+    const [result] = await connect.query(sqlQuery, [factura_id, envio_id, updated_at, id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "factura_envio not found" });
     res.status(200).json({
-      data: { newFacturaId_Factura, newEnvioId_Envio, updated_at },
+      data: { id, factura_id, envio_id, updated_at },
       status: 200,
       updated: result.affectedRows
     });
@@ -74,9 +74,9 @@ export const updateFacturaEnvio = async (req, res) => {
 // DELETE
 export const deleteFacturaEnvio = async (req, res) => {
   try {
-    const { FacturaId_Factura, EnvioId_Envio } = req.params;
-    const sqlQuery = "DELETE FROM factura_envio WHERE FacturaId_Factura = ? AND EnvioId_Envio = ?";
-    const [result] = await connect.query(sqlQuery, [FacturaId_Factura, EnvioId_Envio]);
+    const { id } = req.params;
+    const sqlQuery = "DELETE FROM factura_envio WHERE id = ?";
+    const [result] = await connect.query(sqlQuery, [id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "factura_envio not found" });
     res.status(200).json({
@@ -88,4 +88,3 @@ export const deleteFacturaEnvio = async (req, res) => {
     res.status(500).json({ error: "Error deleting factura_envio", details: error.message });
   }
 };
-

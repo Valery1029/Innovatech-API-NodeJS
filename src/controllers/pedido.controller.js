@@ -35,8 +35,7 @@ export const addPedido = async (req, res) => {
 
     const fecha = new Date().toISOString().slice(0, 19).replace('T', ' ');
     const created_at = fecha;
-    const sqlQuery = `INSERT INTO pedido (valortl, UsuarioId_usuario, fecha, created_at)
-                      VALUES (?, ?, ?, ?)`;
+    const sqlQuery = `INSERT INTO pedido (valortl, UsuarioId_usuario, fecha, created_at) VALUES (?, ?, ?, ?)`;
     const [result] = await connect.query(sqlQuery, [valortl, UsuarioId_usuario, fecha, created_at]);
 
     res.status(201).json({

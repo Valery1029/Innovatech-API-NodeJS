@@ -34,8 +34,7 @@ export const addOfertas = async (req, res) => {
     }
 
     const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `INSERT INTO ofertas (descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sqlQuery = `INSERT INTO ofertas (descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     const [result] = await connect.query(sqlQuery, [
       descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at
     ]);
@@ -59,8 +58,7 @@ export const updateOfertas = async (req, res) => {
     }
 
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `UPDATE ofertas SET descuento = ?, imagen = ?, fechaini = ?, fechafin = ?, descripcion = ?, estado = ?, productos_id = ?, updated_at = ?
-                      WHERE id = ?`;
+    const sqlQuery = `UPDATE ofertas SET descuento = ?, imagen = ?, fechaini = ?, fechafin = ?, descripcion = ?, estado = ?, productos_id = ?, updated_at = ? WHERE id = ?`;
     const [result] = await connect.query(sqlQuery, [
       descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, updated_at, id
     ]);

@@ -1,6 +1,6 @@
 import { connect } from "../config/db/connect.js";
 
-// GET
+// GET all
 export const showProductosIngresoProducto = async (req, res) => {
   try {
     const sqlQuery = "SELECT * FROM productos_ingreso_producto";
@@ -11,11 +11,11 @@ export const showProductosIngresoProducto = async (req, res) => {
   }
 };
 
-// GET by Ingreso_productoid_ingreso
-export const showProductosIngresoProductoId = async (req, res) => {
+// GET by ingreso_producto_id
+export const showProductosIngresoProductoIngresoId = async (req, res) => {
   try {
-    const sqlQuery = `SELECT * FROM productos_ingreso_producto WHERE Ingreso_productoid_ingreso = ?`;
-    const [result] = await connect.query(sqlQuery, [req.params.Ingreso_productoid_ingreso]);
+    const sqlQuery = `SELECT * FROM productos_ingreso_producto WHERE ingreso_producto_id = ?`;
+    const [result] = await connect.query(sqlQuery, [req.params.ingreso_producto_id]);
 
     if (result.length === 0) return res.status(404).json({ error: "No entries found" });
     res.status(200).json(result);
@@ -27,18 +27,18 @@ export const showProductosIngresoProductoId = async (req, res) => {
 // POST
 export const addProductosIngresoProducto = async (req, res) => {
   try {
-    const { ProductosId_Producto, Ingreso_productoid_ingreso, cantidad } = req.body;
+    const { producto_id, ingreso_producto_id, cantidad } = req.body;
 
-    if (!ProductosId_Producto || !Ingreso_productoid_ingreso || !cantidad) {
+    if (!producto_id || !ingreso_producto_id || !cantidad) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const created_at = new Date().toISOString().slice(0, 19).replace("T", " ");
-    const sqlQuery = `INSERT INTO productos_ingreso_producto (ProductosId_Producto, Ingreso_productoid_ingreso, cantidad, created_at) VALUES (?, ?, ?, ?)`;
+    const sqlQuery = `INSERT INTO productos_ingreso_producto (producto_id, ingreso_producto_id, cantidad, created_at) VALUES (?, ?, ?, ?)`;
 
     const [result] = await connect.query(sqlQuery, [
-      ProductosId_Producto,
-      Ingreso_productoid_ingreso,
+      producto_id,
+      ingreso_producto_id,
       cantidad,
       created_at
     ]);
@@ -46,8 +46,8 @@ export const addProductosIngresoProducto = async (req, res) => {
     res.status(201).json({
       data: {
         id: result.insertId,
-        ProductosId_Producto,
-        Ingreso_productoid_ingreso,
+        producto_id,
+        ingreso_producto_id,
         cantidad,
         created_at
       },
@@ -61,20 +61,19 @@ export const addProductosIngresoProducto = async (req, res) => {
 // PUT
 export const updateProductosIngresoProducto = async (req, res) => {
   try {
-    const { ProductosId_Producto, Ingreso_productoid_ingreso, cantidad } = req.body;
+    const { id, cantidad } = req.body;
 
-    if (!ProductosId_Producto || !Ingreso_productoid_ingreso || !cantidad) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!id || !cantidad) {
+      return res.status(400).json({ error: "Missing required fields: id, cantidad" });
     }
 
     const updated_at = new Date().toISOString().slice(0, 19).replace("T", " ");
-    const sqlQuery = `UPDATE productos_ingreso_producto SET cantidad = ?, updated_at = ? WHERE ProductosId_Producto = ? AND Ingreso_productoid_ingreso = ?`;
+    const sqlQuery = `UPDATE productos_ingreso_producto SET cantidad = ?, updated_at = ? WHERE id = ?`;
 
     const [result] = await connect.query(sqlQuery, [
       cantidad,
       updated_at,
-      ProductosId_Producto,
-      Ingreso_productoid_ingreso
+      id
     ]);
 
     if (result.affectedRows === 0)
@@ -82,8 +81,7 @@ export const updateProductosIngresoProducto = async (req, res) => {
 
     res.status(200).json({
       data: {
-        ProductosId_Producto,
-        Ingreso_productoid_ingreso,
+        id,
         cantidad,
         updated_at
       },
@@ -98,14 +96,10 @@ export const updateProductosIngresoProducto = async (req, res) => {
 // DELETE
 export const deleteProductosIngresoProducto = async (req, res) => {
   try {
-    const { ProductosId_Producto, Ingreso_productoid_ingreso } = req.params;
+    const { id } = req.params;
 
-    const sqlQuery = `DELETE FROM productos_ingreso_producto WHERE ProductosId_Producto = ? AND Ingreso_productoid_ingreso = ?`;
-
-    const [result] = await connect.query(sqlQuery, [
-      ProductosId_Producto,
-      Ingreso_productoid_ingreso
-    ]);
+    const sqlQuery = `DELETE FROM productos_ingreso_producto WHERE id = ?`;
+    const [result] = await connect.query(sqlQuery, [id]);
 
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Entry not found" });

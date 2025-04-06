@@ -15,10 +15,8 @@ router.route(apiName)
   .post(addProductosPedido)
   .put(updateProductosPedido);
 
-router.route(`${apiName}/:PedidoId_Pedido`)
-  .get(showProductosPedidoId);
-
-router.route(`${apiName}/:ProductosId_Producto/:PedidoId_Pedido`)
+router.route(`${apiName}/:id`)
+  .get(showProductosPedidoId)
   .delete(deleteProductosPedido);
 
 export default router;

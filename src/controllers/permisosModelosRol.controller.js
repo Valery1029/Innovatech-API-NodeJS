@@ -14,8 +14,8 @@ export const showPermisosModelosRol = async (req, res) => {
 // GET ID
 export const showPermisosModelosRolId = async (req, res) => {
   try {
-    const sqlQuery = `SELECT * FROM permisos_modelos_rol WHERE Permisosid = ? AND Modelos_RolModelosid = ? AND Modelos_RolRolid = ?`;
-    const [result] = await connect.query(sqlQuery, [req.params.Permisosid, req.params.Modelos_RolModelosid, req.params.Modelos_RolRolid]);
+    const sqlQuery = `SELECT * FROM permisos_modelos_rol WHERE id = ?`;
+    const [result] = await connect.query(sqlQuery, [req.params.id]);
 
     if (result.length === 0) return res.status(404).json({ error: "permisos_modelos_rol not found" });
     res.status(200).json(result[0]);
@@ -27,18 +27,18 @@ export const showPermisosModelosRolId = async (req, res) => {
 // POST
 export const addPermisosModelosRol = async (req, res) => {
   try {
-    const { Permisosid, Modelos_RolModelosid, Modelos_RolRolid } = req.body;
+    const { Permisosid, ModelosRolId } = req.body;
 
-    if (!Permisosid || !Modelos_RolModelosid || !Modelos_RolRolid) {
-      return res.status(400).json({ error: "Missing required fields: Permisosid, Modelos_RolModelosid, Modelos_RolRolid" });
+    if (!Permisosid || !ModelosRolId) {
+      return res.status(400).json({ error: "Missing required fields: Permisosid, ModelosRolId" });
     }
 
-    const sqlQuery = `INSERT INTO permisos_modelos_rol (Permisosid, Modelos_RolModelosid, Modelos_RolRolid, created_at) VALUES (?, ?, ?, ?)`;
     const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const [result] = await connect.query(sqlQuery, [Permisosid, Modelos_RolModelosid, Modelos_RolRolid, created_at]);
+    const sqlQuery = `INSERT INTO permisos_modelos_rol (Permisosid, ModelosRolId, created_at) VALUES (?, ?, ?)`;
+    const [result] = await connect.query(sqlQuery, [Permisosid, ModelosRolId, created_at]);
 
     res.status(201).json({
-      data: { Permisosid, Modelos_RolModelosid, Modelos_RolRolid, created_at },
+      data: { id: result.insertId, Permisosid, ModelosRolId, created_at },
       status: 201
     });
   } catch (error) {
@@ -49,19 +49,20 @@ export const addPermisosModelosRol = async (req, res) => {
 // PUT
 export const updatePermisosModelosRol = async (req, res) => {
   try {
-    const { Permisosid, Modelos_RolModelosid, Modelos_RolRolid } = req.body;
+    const { Permisosid, ModelosRolId } = req.body;
 
-    if (!Permisosid || !Modelos_RolModelosid || !Modelos_RolRolid) {
-      return res.status(400).json({ error: "Missing required fields: Permisosid, Modelos_RolModelosid, Modelos_RolRolid" });
+    if (!Permisosid || !ModelosRolId) {
+      return res.status(400).json({ error: "Missing required fields: Permisosid, ModelosRolId" });
     }
 
-    const sqlQuery = `UPDATE permisos_modelos_rol SET updated_at = ? WHERE Permisosid = ? AND Modelos_RolModelosid = ? AND Modelos_RolRolid = ?`;
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const [result] = await connect.query(sqlQuery, [updated_at, Permisosid, Modelos_RolModelosid, Modelos_RolRolid]);
+    const sqlQuery = `UPDATE permisos_modelos_rol SET Permisosid = ?, ModelosRolId = ?, updated_at = ? WHERE id = ?`;
+    const [result] = await connect.query(sqlQuery, [Permisosid, ModelosRolId, updated_at, req.params.id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "permisos_modelos_rol not found" });
+
     res.status(200).json({
-      data: { Permisosid, Modelos_RolModelosid, Modelos_RolRolid, updated_at },
+      data: { id: req.params.id, Permisosid, ModelosRolId, updated_at },
       status: 200,
       updated: result.affectedRows
     });
@@ -73,10 +74,11 @@ export const updatePermisosModelosRol = async (req, res) => {
 // DELETE
 export const deletePermisosModelosRol = async (req, res) => {
   try {
-    const sqlQuery = `DELETE FROM permisos_modelos_rol WHERE Permisosid = ? AND Modelos_RolModelosid = ? AND Modelos_RolRolid = ?`;
-    const [result] = await connect.query(sqlQuery, [req.params.Permisosid, req.params.Modelos_RolModelosid, req.params.Modelos_RolRolid]);
+    const sqlQuery = `DELETE FROM permisos_modelos_rol WHERE id = ?`;
+    const [result] = await connect.query(sqlQuery, [req.params.id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "permisos_modelos_rol not found" });
+
     res.status(200).json({
       data: [],
       status: 200,

@@ -10,13 +10,15 @@ import {
 const router = Router();
 const apiName = '/modelosRol';
 
+// Rutas generales (GET all, POST, PUT general)
 router.route(apiName)
   .get(showModelosRol)
-  .post(addModelosRol)
-  .put(updateModelosRol);
+  .post(addModelosRol);
 
-router.route(`${apiName}/:Rolid`)
+// Rutas por ID (GET, PUT, DELETE)
+router.route(`${apiName}/:id`)
   .get(showModelosRolId)
+  .put(updateModelosRol)
   .delete(deleteModelosRol);
 
 export default router;

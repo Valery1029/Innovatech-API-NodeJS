@@ -3,11 +3,10 @@ import { connect } from '../config/db/connect.js';
 // GET
 export const showAlmacenamientos = async (req, res) => {
   try {
-    let sqlQuery = "SELECT * FROM almacenamiento";
-    const [result] = await connect.query(sqlQuery);
+    const [result] = await connect.query("SELECT * FROM almacenamiento");
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ error: "Error fetching almacenamientos", details: error.message });
+    res.status(500).json({ error: "Error fetching almacenamiento", details: error.message });
   }
 };
 
@@ -15,7 +14,6 @@ export const showAlmacenamientos = async (req, res) => {
 export const showAlmacenamientoId = async (req, res) => {
   try {
     const [result] = await connect.query("SELECT * FROM almacenamiento WHERE id = ?", [req.params.id]);
-    
     if (result.length === 0) return res.status(404).json({ error: "Almacenamiento not found" });
     res.status(200).json(result[0]);
   } catch (error) {
@@ -27,15 +25,15 @@ export const showAlmacenamientoId = async (req, res) => {
 export const addAlmacenamiento = async (req, res) => {
   try {
     const { num, unidadestandar } = req.body;
-    
+
     if (!num || !unidadestandar) {
-      return res.status(400).json({ error: "Missing required fields: num, unidadestandar" });
+      return res.status(400).json({ error: "Missing required fields" });
     }
-    
-    let sqlQuery = "INSERT INTO almacenamiento (num, unidadestandar, created_at) VALUES (?, ?, ?)";
-    const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    const created_at = new Date();
+    const sqlQuery = "INSERT INTO almacenamiento (num, unidadestandar, created_at) VALUES (?, ?, ?)";
     const [result] = await connect.query(sqlQuery, [num, unidadestandar, created_at]);
-    
+
     res.status(201).json({
       data: { id: result.insertId, num, unidadestandar, created_at },
       status: 201
@@ -49,16 +47,17 @@ export const addAlmacenamiento = async (req, res) => {
 export const updateAlmacenamiento = async (req, res) => {
   try {
     const { num, unidadestandar } = req.body;
-    
+
     if (!num || !unidadestandar) {
-      return res.status(400).json({ error: "Missing required fields: num, unidadestandar" });
+      return res.status(400).json({ error: "Missing required fields" });
     }
-    
-    let sqlQuery = "UPDATE almacenamiento SET num = ?, unidadestandar = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    const updated_at = new Date();
+    const sqlQuery = "UPDATE almacenamiento SET num = ?, unidadestandar = ?, updated_at = ? WHERE id = ?";
     const [result] = await connect.query(sqlQuery, [num, unidadestandar, updated_at, req.params.id]);
-    
+
     if (result.affectedRows === 0) return res.status(404).json({ error: "Almacenamiento not found" });
+
     res.status(200).json({
       data: { num, unidadestandar, updated_at },
       status: 200,
@@ -72,10 +71,11 @@ export const updateAlmacenamiento = async (req, res) => {
 // DELETE
 export const deleteAlmacenamiento = async (req, res) => {
   try {
-    let sqlQuery = "DELETE FROM almacenamiento WHERE id = ?";
+    const sqlQuery = "DELETE FROM almacenamiento WHERE id = ?";
     const [result] = await connect.query(sqlQuery, [req.params.id]);
-    
+
     if (result.affectedRows === 0) return res.status(404).json({ error: "Almacenamiento not found" });
+
     res.status(200).json({
       data: [],
       status: 200,
