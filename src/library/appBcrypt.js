@@ -1,23 +1,28 @@
-import appBcrypt from 'bcrypt';
+// archivo: bcryptUtils.js
+import bcrypt from 'bcrypt';
+
 const saltRounds = 10;
 
-//Encryptacion
+// Encriptar password
 export const encryptPassword = async (password) => {
   try {
-    const hashedPassword = await appBcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     return hashedPassword;
   } catch (error) {
     console.error('Error encrypt:', error);
     throw error;
   }
 };
-//Comparacion de contraseñas
+
+// Comparar password plano con hash
 export const comparePassword = async (password, hashedPassword) => {
   try {
-    const match = await appBcrypt.compare(password, hashedPassword);
+    // Reemplazar $2y$ por $2b$ para compatibilidad con bcrypt de Node.js
+    const fixedHash = hashedPassword.replace("$2y$", "$2b$");
+    const match = await bcrypt.compare(password, fixedHash);
     return match;
   } catch (error) {
-    console.error('Error compare the hash:', error);
+    console.error('Error compare:', error);
     throw error;
   }
 };
