@@ -12,11 +12,11 @@ const apiName = '/ofertas';
 
 router.route(apiName)
   .get(showOfertas)
-  .post(addOfertas)
-  .put(updateOfertas);
+  .post(addOfertas);
 
 router.route(`${apiName}/:id`)
   .get(showOfertasId)
+  .put(updateOfertas)
   .delete(deleteOfertas);
 
 export default router;

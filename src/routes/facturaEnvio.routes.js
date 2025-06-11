@@ -13,10 +13,10 @@ const apiName = "/facturaEnvio";
 router.route(apiName)
   .get(showFacturaEnvio)
   .post(addFacturaEnvio)
-  .put(updateFacturaEnvio);
 
 router.route(`${apiName}/:id`)
   .get(showFacturaEnvioId)
+  .put(updateFacturaEnvio)
   .delete(deleteFacturaEnvio);
 
 export default router;

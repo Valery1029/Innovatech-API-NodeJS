@@ -13,10 +13,10 @@ const apiName = '/ingresoProducto';
 router.route(apiName)
   .get(showIngresoProducto)
   .post(addIngresoProducto)
-  .put(updateIngresoProducto);
 
 router.route(`${apiName}/:id`)
   .get(showIngresoProductoId)
+  .put(updateIngresoProducto)
   .delete(deleteIngresoProducto);
 
 export default router;

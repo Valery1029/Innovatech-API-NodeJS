@@ -49,17 +49,24 @@ export const addEnvio = async (req, res) => {
 // PUT
 export const updateEnvio = async (req, res) => {
   try {
-    const { id, direccion, estado_envio_id, usuario_id } = req.body;
+    const { id } = req.params;
+    const { direccion, estado_envio_id, usuario_id } = req.body;
 
-    if (!id || !direccion || !estado_envio_id || !usuario_id) {
-      return res.status(400).json({ error: "Missing required fields: id, direccion, estado_envio_id, usuario_id" });
+    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const sqlQuery = `
+      UPDATE envio
+      SET direccion = ?, estado_envio_id = ?, usuario_id = ?, updated_at = ?
+      WHERE id = ?
+    `;
+
+    const [result] = await connect.query(sqlQuery, [
+      direccion, estado_envio_id, usuario_id, updated_at, id
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "envio not found" });
     }
 
-    const sqlQuery = "UPDATE envio SET direccion = ?, estado_envio_id = ?, usuario_id = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const [result] = await connect.query(sqlQuery, [direccion, estado_envio_id, usuario_id, updated_at, id]);
-
-    if (result.affectedRows === 0) return res.status(404).json({ error: "envio not found" });
     res.status(200).json({
       data: { id, direccion, estado_envio_id, usuario_id, updated_at },
       status: 200,

@@ -13,10 +13,10 @@ const apiName = "/factura";
 router.route(apiName)
   .get(showFactura)
   .post(addFactura)
-  .put(updateFactura);
 
 router.route(`${apiName}/:id`)
   .get(showFacturaId)
+  .put(updateFactura)
   .delete(deleteFactura);
 
 export default router;
