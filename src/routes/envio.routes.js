@@ -13,10 +13,10 @@ const apiName = '/envio';
 router.route(apiName)
   .get(showEnvio)
   .post(addEnvio)
-  .put(updateEnvio);
 
 router.route(`${apiName}/:id`)
   .get(showEnvioId)
+  .put(updateEnvio)
   .delete(deleteEnvio);
 
 export default router;

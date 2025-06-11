@@ -51,21 +51,22 @@ export const addSalidaProducto = async (req, res) => {
 // PUT
 export const updateSalidaProducto = async (req, res) => {
   try {
-    const { id, Fecha, Cantidad, Precio, facturaid, Productosid } = req.body;
-
-    if (!id || !Fecha || !Cantidad || !Precio || !facturaid || !Productosid) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+    const { id } = req.params;
+    const { Fecha, Cantidad, Precio, facturaid, Productosid } = req.body;
 
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `UPDATE salida_producto SET Fecha = ?, Cantidad = ?, Precio = ?, facturaid = ?, Productosid = ?, updated_at = ? WHERE id = ?`;
+    const sqlQuery = `UPDATE salida_producto SET Fecha=?, Cantidad=?, Precio=?, facturaid=?, Productosid=?, updated_at=? WHERE id=?`;
+
     const [result] = await connect.query(sqlQuery, [
       Fecha, Cantidad, Precio, facturaid, Productosid, updated_at, id
     ]);
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: "salida_producto not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "salida_producto not found" });
+    }
+
     res.status(200).json({
-      data: { id, Fecha, Cantidad, Precio, facturaid, Productosid, updated_at },
+      data: { id, ...req.body },
       status: 200,
       updated: result.affectedRows
     });

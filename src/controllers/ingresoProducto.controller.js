@@ -49,17 +49,24 @@ export const addIngresoProducto = async (req, res) => {
 // PUT
 export const updateIngresoProducto = async (req, res) => {
   try {
+    const { id } = req.params;
     const { factura, usuario_id } = req.body;
 
-    if (!factura || !usuario_id) {
-      return res.status(400).json({ error: "Missing required fields: factura, usuario_id" });
+    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const sqlQuery = `
+      UPDATE ingreso_producto
+      SET factura = ?, usuario_id = ?, updated_at = ?
+      WHERE id = ?
+    `;
+
+    const [result] = await connect.query(sqlQuery, [
+      factura, usuario_id, updated_at, id
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "ingreso_producto not found" });
     }
 
-    const sqlQuery = "UPDATE ingreso_producto SET factura = ?, usuario_id = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const [result] = await connect.query(sqlQuery, [factura, usuario_id, updated_at, id]);
-
-    if (result.affectedRows === 0) return res.status(404).json({ error: "ingreso_producto not found" });
     res.status(200).json({
       data: { id, factura, usuario_id, updated_at },
       status: 200,

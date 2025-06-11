@@ -62,8 +62,9 @@ export const addProductos = async (req, res) => {
 // PUT
 export const updateProductos = async (req, res) => {
   try {
+    const { id } = req.params;
     const {
-      id, nom, descripcion, existencias, precio, imagen,
+      nom, descripcion, existencias, precio, imagen,
       caracteristicas, tam, tampantalla, id_marca,
       id_estado, id_color, id_categoria, id_garantia,
       id_almacenamiento, id_ram, id_sistema_operativo, id_resolucion
@@ -83,10 +84,12 @@ export const updateProductos = async (req, res) => {
       id_ram, id_sistema_operativo, id_resolucion, updated_at, id
     ]);
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: "producto not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "producto not found" });
+    }
 
     res.status(200).json({
-      data: req.body,
+      data: { id, ...req.body },
       status: 200,
       updated: result.affectedRows
     });
