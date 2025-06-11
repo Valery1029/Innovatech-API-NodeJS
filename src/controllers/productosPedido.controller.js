@@ -50,17 +50,13 @@ export const addProductosPedido = async (req, res) => {
   }
 };
 
-// PUT: Actualizar registro (solo marca update_at por ahora)
+// PUT
 export const updateProductosPedido = async (req, res) => {
   try {
-    const { id } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ error: "Missing ID field" });
-    }
+    const { id } = req.params;
 
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `UPDATE productos_pedido SET updated_at = ? WHERE id = ?`;
+    const sqlQuery = `UPDATE productos_pedido SET updated_at=? WHERE id=?`;
 
     const [result] = await connect.query(sqlQuery, [updated_at, id]);
 
