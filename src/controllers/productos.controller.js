@@ -51,7 +51,10 @@ export const addProductos = async (req, res) => {
     ]);
 
     res.status(201).json({
-      data: req.body,
+      data: {id: result.insertId, nom, descripcion, existencias, precio, imagen,
+      caracteristicas, tam, tampantalla, id_marca, id_estado,
+      id_color, id_categoria, id_garantia, id_almacenamiento,
+      id_ram, id_sistema_operativo, id_resolucion, created_at},
       status: 201
     });
   } catch (error) {

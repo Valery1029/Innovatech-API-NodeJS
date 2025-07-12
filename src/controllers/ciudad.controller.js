@@ -26,15 +26,17 @@ export const showCiudadId = async (req, res) => {
 // POST
 export const addCiudad = async (req, res) => {
   try {
-    const { nom, departamentoid } = req.body;
+    const { id, nom, departamentoid, code } = req.body;
 
-    if (!nom || !departamentoid) {
+    if (!id || !nom || !departamentoid || !code) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    let sqlQuery = "INSERT INTO ciudad (nom, departamentoid) VALUES (?, ?)";
-    const [result] = await connect.query(sqlQuery, [nom, departamentoid]);
+
+    const sqlQuery = "INSERT INTO ciudad (id, name, department, code) VALUES (?, ?, ?, ?)";
+    const [result] = await connect.query(sqlQuery, [id, nom, departamentoid, code]);
+
     res.status(201).json({
-      data: { id: result.insertId, nom, departamentoid },
+      data: { id, nom, departamentoid, code },
       status: 201
     });
   } catch (error) {
@@ -45,19 +47,29 @@ export const addCiudad = async (req, res) => {
 // PUT
 export const updateCiudad = async (req, res) => {
   try {
-    const { nom, departamentoid } = req.body;
+    const { id, nom, departamentoid, code } = req.body;
 
-    if (!nom || !departamentoid) {
+    if (!id || !nom || !departamentoid || !code) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    let sqlQuery = "UPDATE ciudad SET nom = ?, departamentoid = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
-    const [result] = await connect.query(sqlQuery, [nom, departamentoid, updated_at, req.params.id]);
+    // Fecha con formato compatible con MySQL
+    const updated_at = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: "Ciudad not found" });
+    const sqlQuery = `
+      UPDATE ciudad 
+      SET name = ?, department = ?, code = ?, updated_at = ? 
+      WHERE id = ?
+    `;
+
+    const [result] = await connect.query(sqlQuery, [nom, departamentoid, code, updated_at, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Ciudad not found" });
+    }
+
     res.status(200).json({
-      data: { nom, departamentoid, updated_at },
+      data: { id, nom, departamentoid, code, updated_at },
       status: 200,
       updated: result.affectedRows
     });

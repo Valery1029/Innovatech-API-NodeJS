@@ -13,10 +13,10 @@ const apiName = "/pqrs";
 router.route(apiName)
   .get(showPqrs)
   .post(addPqrs)
-  .put(updatePqrs);
 
 router.route(`${apiName}/:id`)
   .get(showPqrsId)
+  .put(updatePqrs)
   .delete(deletePqrs);
 
 export default router;

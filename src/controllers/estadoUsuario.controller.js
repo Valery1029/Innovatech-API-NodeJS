@@ -50,12 +50,15 @@ export const updateEstadoUsuario = async (req, res) => {
     if (!nom || !descripcion) {
       return res.status(400).json({ error: "Missing required field: Nombre" });
     }
+    const updated_at = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     let sqlQuery = "UPDATE estado_usuario SET Nombre = ?, Descripción = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
     const [result] = await connect.query(sqlQuery, [nom, descripcion, updated_at, req.params.id]);
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: "Estado de usuario not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Estado de usuario not found" });
+    }
+
     res.status(200).json({
       data: { nom, descripcion, updated_at },
       status: 200,

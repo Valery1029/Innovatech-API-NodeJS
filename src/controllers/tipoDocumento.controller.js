@@ -51,11 +51,15 @@ export const updateTipoDocumento = async (req, res) => {
       return res.status(400).json({ error: "Missing required field: nom" });
     }
 
-    let sqlQuery = "UPDATE tipo_documento SET nom = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
+    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    const sqlQuery = "UPDATE tipo_documento SET nom = ?, updated_at = ? WHERE id = ?";
     const [result] = await connect.query(sqlQuery, [nom, updated_at, req.params.id]);
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: "Tipo de documento not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Tipo de documento not found" });
+    }
+
     res.status(200).json({
       data: { nom, updated_at },
       status: 200,

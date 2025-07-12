@@ -51,8 +51,8 @@ export const updateRol = async (req, res) => {
       return res.status(400).json({ error: "Missing required field: nom" });
     }
 
-    let sqlQuery = "UPDATE rol SET nom = ?, descripcion = ?, updated_at = ? WHERE id = ?";
-    const updated_at = new Date().toLocaleString("en-CA", { timeZone: "America/Bogota" }).replace(",", "").replace("/", "-").replace("/", "-");
+    const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const sqlQuery = "UPDATE rol SET nom = ?, descripcion = ?, updated_at = ? WHERE id = ?";
     const [result] = await connect.query(sqlQuery, [nom, descripcion, updated_at, req.params.id]);
 
     if (result.affectedRows === 0) return res.status(404).json({ error: "Rol not found" });

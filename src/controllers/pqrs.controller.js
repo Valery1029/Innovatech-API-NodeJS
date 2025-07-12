@@ -51,21 +51,40 @@ export const addPqrs = async (req, res) => {
 // PUT
 export const updatePqrs = async (req, res) => {
   try {
-    const { id, descripcion, comentario_respuesta, tipo_pqrs_id, usuario_id, estado_pqrs_id } = req.body;
+    const { id } = req.params;
+    const { descripcion, comentario_respuesta, tipo_pqrs_id, usuario_id, estado_pqrs_id } = req.body;
 
-    if (!id || !descripcion || !tipo_pqrs_id || !usuario_id || !estado_pqrs_id) {
+    if (!descripcion || !tipo_pqrs_id || !usuario_id || !estado_pqrs_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `UPDATE pqrs SET descripcion = ?, comentario_respuesta = ?, tipo_pqrs_id = ?, usuario_id = ?, estado_pqrs_id = ?, updated_at = ? WHERE id = ?`;
+
+    const sqlQuery = `
+      UPDATE pqrs 
+      SET descripcion = ?, comentario_respuesta = ?, tipo_pqrs_id = ?, 
+          usuario_id = ?, estado_pqrs_id = ?, updated_at = ? 
+      WHERE id = ?
+    `;
+
     const [result] = await connect.query(sqlQuery, [
       descripcion, comentario_respuesta, tipo_pqrs_id, usuario_id, estado_pqrs_id, updated_at, id
     ]);
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: "pqrs not found" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "pqrs not found" });
+    }
+
     res.status(200).json({
-      data: { id, descripcion, comentario_respuesta, tipo_pqrs_id, usuario_id, estado_pqrs_id, updated_at },
+      data: {
+        id,
+        descripcion,
+        comentario_respuesta,
+        tipo_pqrs_id,
+        usuario_id,
+        estado_pqrs_id,
+        updated_at
+      },
       status: 200,
       updated: result.affectedRows
     });

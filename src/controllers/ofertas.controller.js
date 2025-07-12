@@ -33,14 +33,38 @@ export const addOfertas = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const formatDate = (inputDate) => {
+      const [day, month, year] = inputDate.split('/');
+      return `${year}-${month}-${day}`;
+    };
+
+    const fechainiFormatted = formatDate(fechaini);
+    const fechafinFormatted = fechafin ? formatDate(fechafin) : null;
+
     const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `INSERT INTO ofertas (descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const sqlQuery = `
+      INSERT INTO ofertas 
+      (descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
     const [result] = await connect.query(sqlQuery, [
-      descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at
+      descuento, imagen, fechainiFormatted, fechafinFormatted, descripcion, estado, productos_id, created_at
     ]);
 
     res.status(201).json({
-      data: { id: result.insertId, descuento, imagen, fechaini, fechafin, descripcion, estado, productos_id, created_at },
+      data: {
+        id: result.insertId,
+        descuento,
+        imagen,
+        fechaini: fechainiFormatted,
+        fechafin: fechafinFormatted,
+        descripcion,
+        estado,
+        productos_id,
+        created_at
+      },
       status: 201
     });
   } catch (error) {
@@ -57,21 +81,48 @@ export const updateOfertas = async (req, res) => {
       descripcion, estado, productos_id
     } = req.body;
 
+    if (!descuento || !imagen || !fechaini || estado === undefined || !productos_id) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const formatDate = (inputDate) => {
+      const [day, month, year] = inputDate.split('/');
+      return `${year}-${month}-${day}`;
+    };
+
+    const fechainiFormatted = formatDate(fechaini);
+    const fechafinFormatted = fechafin ? formatDate(fechafin) : null;
+
     const updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const sqlQuery = `UPDATE ofertas SET descuento=?, imagen=?, fechaini=?, fechafin=?, 
-      descripcion=?, estado=?, productos_id=?, updated_at=? WHERE id=?`;
+
+    const sqlQuery = `
+      UPDATE ofertas 
+      SET descuento = ?, imagen = ?, fechaini = ?, fechafin = ?, 
+          descripcion = ?, estado = ?, productos_id = ?, updated_at = ? 
+      WHERE id = ?
+    `;
 
     const [result] = await connect.query(sqlQuery, [
-      descuento, imagen, fechaini, fechafin,
+      descuento, imagen, fechainiFormatted, fechafinFormatted,
       descripcion, estado, productos_id, updated_at, id
     ]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "oferta not found" });
+      return res.status(404).json({ error: "Oferta not found" });
     }
 
     res.status(200).json({
-      data: { id, ...req.body },
+      data: {
+        id,
+        descuento,
+        imagen,
+        fechaini: fechainiFormatted,
+        fechafin: fechafinFormatted,
+        descripcion,
+        estado,
+        productos_id,
+        updated_at
+      },
       status: 200,
       updated: result.affectedRows
     });
