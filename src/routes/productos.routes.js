@@ -4,15 +4,25 @@ import {
   showProductosId,
   addProductos,
   updateProductos,
-  deleteProductos
-} from '../controllers/productos.controller.js';
+  deleteProductos,
+  getCategoriasConProductos,
+  searchProductos 
+} from "../controllers/productos.controller.js";
 
 const router = Router();
-const apiName = '/productos';
+const apiName = "/productos";
 
+// 🔹 Rutas principales
 router.route(apiName)
   .get(showProductos)
-  .post(addProductos)
+  .post(addProductos);
+
+
+router.get(`${apiName}/categorias-con-productos`, getCategoriasConProductos);
+
+
+router.get(`${apiName}/buscar`, searchProductos);
+
 
 router.route(`${apiName}/:id`)
   .get(showProductosId)

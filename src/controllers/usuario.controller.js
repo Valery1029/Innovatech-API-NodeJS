@@ -1,5 +1,7 @@
+import jwt from 'jsonwebtoken';
 import { connect } from '../config/db/connect.js';
-import {encryptPassword} from '../library/appBcrypt.js';
+import { encryptPassword, comparePassword } from '../library/appBcrypt.js';
+
 
 // GET
 export const showUsuarios = async (req, res) => {
@@ -111,5 +113,58 @@ export const deleteUsuario = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Error deleting usuario", details: error.message });
+  }
+};
+
+export const loginUsuario = async (req, res) => {
+  try {
+    const { usuario, password } = req.body;
+
+    if (!usuario || !password) {
+      return res.status(400).json({ error: "El usuario y la contraseña son obligatorios." });
+    }
+
+
+    const sqlQuery = "SELECT * FROM usuario WHERE usuario = ?";
+    const [result] = await connect.query(sqlQuery, [usuario]);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Usuario no registrado." });
+    }
+
+    const user = result[0];
+
+    
+    const validPassword = await comparePassword(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Contraseña incorrecta." });
+    }
+
+    
+    if (user.estado_usuario_id !== 1) { 
+      return res.status(403).json({ error: "El usuario no tiene acceso actualmente." });
+    }
+
+    // Generar JWT
+    const token = jwt.sign(
+      { id: user.id_usuario, rol: user.rol_id, estado: user.estado_usuario_id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({
+      message: "Inicio de sesión exitoso.",
+      token,
+      user: {
+        id: user.id_usuario,
+        nombre: `${user.primer_nombre} ${user.primer_apellido}`,
+        correo: user.correo,
+        usuario: user.usuario,
+        rol: user.rol_id,
+        estado: user.estado_usuario_id
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error al iniciar sesión.", details: error.message });
   }
 };
