@@ -191,7 +191,7 @@ export const solicitarRestablecimiento = async (req, res) => {
     );
 
     // 🔗 Enlace que abrirá directamente la app con el token
-    const enlace = `https://52775c5b2b07.ngrok-free.app/api_v1/deeplink?token=${token}`;
+    const enlace = `https://innovatech-api.onrender.com/api_v1/deeplink?token=${token}`;
 
     const mensajeHTML = `
     <!DOCTYPE html>
