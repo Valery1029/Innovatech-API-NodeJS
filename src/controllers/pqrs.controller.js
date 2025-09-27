@@ -109,3 +109,30 @@ export const deletePqrs = async (req, res) => {
     res.status(500).json({ error: "Error deleting pqrs", details: error.message });
   }
 };
+
+export const showPqrsByUser = async (req, res) => {
+  try {
+    const { usuario_id } = req.params;
+
+    const sqlQuery = `
+      SELECT p.id, p.descripcion, p.comentario_respuesta, p.tipo_pqrs_id, 
+             p.usuario_id, p.estado_pqrs_id, p.created_at, p.updated_at,
+             t.nom AS tipo_pqrs, e.nom AS estado_pqrs
+      FROM pqrs p
+      INNER JOIN tipo_pqrs t ON p.tipo_pqrs_id = t.id
+      INNER JOIN estado_pqrs e ON p.estado_pqrs_id = e.id
+      WHERE p.usuario_id = ? 
+      ORDER BY p.created_at DESC
+    `;
+
+    const [result] = await connect.query(sqlQuery, [usuario_id]);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "No hay PQRS registradas para este usuario" });
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching pqrs by user", details: error.message });
+  }
+};

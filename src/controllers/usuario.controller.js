@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { connect } from '../config/db/connect.js';
 import { encryptPassword, comparePassword } from '../library/appBcrypt.js';
+import nodemailer from 'nodemailer';
 
 
 // GET
@@ -166,5 +167,112 @@ export const loginUsuario = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Error al iniciar sesión.", details: error.message });
+  }
+};
+
+// POST - Solicitar restablecimiento
+export const solicitarRestablecimiento = async (req, res) => {
+  try {
+    const { correo } = req.body;
+
+    // Buscar usuario por correo
+    const [result] = await connect.query("SELECT * FROM usuario WHERE correo = ?", [correo]);
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Correo no registrado." });
+    }
+
+    const user = result[0];
+
+    // Crear token con duración de 30 min
+    const token = jwt.sign(
+      { id: user.id_usuario, correo: user.correo },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" }
+    );
+
+    // 🔗 Enlace que abrirá directamente la app con el token
+    const enlace = `https://52775c5b2b07.ngrok-free.app/api_v1/deeplink?token=${token}`;
+
+    const mensajeHTML = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Recuperación de contraseña</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding: 30px;">
+            <h2 style="color: #0a6069; text-align: center;">🔐 Recuperación de contraseña</h2>
+            <p>Hola <strong>${user.primer_nombre}</strong>,</p>
+            <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para continuar:</p>
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="${enlace}" style="display: inline-block; padding: 14px 30px; background-color: #048d94; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
+                    Restablecer contraseña
+                </a>
+            </p>
+            <p style="font-size: 14px;">Si tú no solicitaste este cambio, puedes ignorar este mensaje sin problema.</p>
+            <p style="color: #888; font-size: 13px;">⏱ Este enlace estará disponible durante los próximos <strong>30 minutos</strong>.</p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            <p style="font-size: 12px; color: #aaa; text-align: center;">Innovatech Dynamic - Todos los derechos reservados</p>
+        </div>
+    </body>
+    </html>
+    `;
+
+    // Configurar transporte de correo
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Enviar correo
+    await transporter.sendMail({
+      from: `"Innovatech Dynamic" <${process.env.EMAIL_USER}>`,
+      to: correo,
+      subject: "🔐 Recupera tu contraseña",
+      html: mensajeHTML,
+    });
+
+    res.status(200).json({ message: "Correo de restablecimiento enviado con éxito." });
+  } catch (error) {
+    console.error("❌ Error al enviar correo:", error);
+    res.status(500).json({ error: "Error al solicitar restablecimiento", details: error.message });
+  }
+};
+
+export const validarTokenReset = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.status(200).json({ valid: true, id: decoded.id, correo: decoded.correo });
+  } catch (error) {
+    res.status(400).json({ valid: false, error: "Token inválido o expirado." });
+  }
+};
+
+// POST - Cambiar contraseña
+export const restablecerPassword = async (req, res) => {
+  try {
+    const { token, nuevaPassword } = req.body;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const hashedPassword = await encryptPassword(nuevaPassword);
+
+    const [result] = await connect.query(
+      "UPDATE usuario SET password = ? WHERE id_usuario = ?",
+      [hashedPassword, decoded.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    res.status(200).json({ message: "Contraseña actualizada correctamente." });
+  } catch (error) {
+    res.status(400).json({ error: "Token inválido o expirado.", details: error.message });
   }
 };

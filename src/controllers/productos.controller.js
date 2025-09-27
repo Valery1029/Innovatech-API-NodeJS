@@ -265,8 +265,12 @@ export const searchProductos = async (req, res) => {
 
     // 🔎 búsqueda por nombre o descripción
     if (query) {
-      sqlQuery += ` AND (p.nom LIKE ? OR p.descripcion LIKE ?)`;
-      values.push(`%${query}%`, `%${query}%`);
+      sqlQuery += ` AND (
+        p.nom LIKE ? 
+        OR p.descripcion LIKE ? 
+        OR c.nom LIKE ?
+      )`;
+      values.push(`%${query}%`, `%${query}%`, `%${query}%`);
     }
 
     // 💰 rangos de precio
