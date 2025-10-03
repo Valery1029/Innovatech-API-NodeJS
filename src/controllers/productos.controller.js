@@ -1,6 +1,8 @@
 
 import { connect } from '../config/db/connect.js';
 
+
+
 // GET
 export const showProductos = async (req, res) => {
   try {
@@ -321,5 +323,221 @@ export const searchProductos = async (req, res) => {
   } catch (error) {
     console.error("❌ Error en searchProductos:", error);
     res.status(500).json({ message: "Error al buscar productos", details: error.message });
+  }
+};
+
+
+
+export const getCarritoUsuario = async (req, res) => {
+  try {
+    const { usuario_id } = req.params;
+
+    const sqlQuery = `
+      SELECT 
+        c.carrito_id,
+        c.usuario_id,
+        c.cantidad,
+        p.id AS producto_id,
+        p.nom,
+        p.descripcion,
+        p.existencias,
+        p.precio,
+        p.imagen,
+        p.caracteristicas,
+        p.tam,
+        p.tampantalla,
+        p.created_at,
+        p.updated_at,
+
+        m.nom AS marca,
+        e.nom AS estado,
+        col.nom AS color,  
+        cat.nom AS categoria,
+
+        g.mes_año AS garantia,
+
+        CONCAT(a.num, ' ', a.unidadestandar) AS almacenamiento,
+        CONCAT(r.num, ' ', r.unidadestandar) AS ram,
+
+        CONCAT(so.nom, ' ', so.version) AS sistema_operativo,
+        res.nom AS resolucion,
+
+        (p.precio * c.cantidad) AS total_producto
+      FROM carrito c
+      JOIN productos p ON c.producto_id = p.id
+      LEFT JOIN marca m ON p.id_marca = m.id
+      LEFT JOIN estado_producto e ON p.id_estado = e.id
+      LEFT JOIN color col ON p.id_color = col.id_color  
+      LEFT JOIN categoria cat ON p.id_categoria = cat.id
+      LEFT JOIN garantia g ON p.id_garantia = g.id
+      LEFT JOIN almacenamiento a ON p.id_almacenamiento = a.id
+      LEFT JOIN almacenamiento_aleatorio r ON p.id_ram = r.id
+      LEFT JOIN sistema_operativo so ON p.id_sistema_operativo = so.id
+      LEFT JOIN resolucion res ON p.id_resolucion = res.id
+      WHERE c.usuario_id = ?;
+    `;
+
+    const [rows] = await connect.query(sqlQuery, [usuario_id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "El carrito está vacío o el usuario no existe." });
+    }
+
+    // ✅ También calculamos el total general del carrito
+    const total_general = rows.reduce((acc, item) => acc + item.total_producto, 0);
+
+    res.status(200).json({
+      usuario_id,
+      total_general,
+      productos: rows
+    });
+
+  } catch (error) {
+    console.error("❌ Error al obtener el carrito:", error);
+    res.status(500).json({ error: "Error al obtener el carrito", details: error.message });
+  }
+};
+
+
+export const addProductoAlCarrito = async (req, res) => {
+  try {
+    const { usuario_id, producto_id, cantidad } = req.body;
+
+    if (!usuario_id || !producto_id) {
+      return res.status(400).json({ error: "usuario_id y producto_id son obligatorios" });
+    }
+
+    // Verificar si ya existe en el carrito
+    const [existente] = await connect.query(
+      `SELECT * FROM carrito WHERE usuario_id = ? AND producto_id = ?`,
+      [usuario_id, producto_id]
+    );
+
+    if (existente.length > 0) {
+      // Si ya existe, actualizamos la cantidad
+      await connect.query(
+        `UPDATE carrito SET cantidad = cantidad + ? WHERE usuario_id = ? AND producto_id = ?`,
+        [cantidad || 1, usuario_id, producto_id]
+      );
+
+      return res.status(200).json({
+        message: "Cantidad actualizada en el carrito ✅",
+        producto_id,
+        usuario_id,
+      });
+    } else {
+      // Si no existe, lo insertamos
+      await connect.query(
+        `INSERT INTO carrito (usuario_id, producto_id, cantidad) VALUES (?, ?, ?)`,
+        [usuario_id, producto_id, cantidad || 1]
+      );
+
+      return res.status(201).json({
+        message: "Producto agregado al carrito 🛒",
+        producto_id,
+        usuario_id,
+        cantidad: cantidad || 1,
+      });
+    }
+  } catch (error) {
+    console.error("❌ Error al agregar al carrito:", error);
+    res.status(500).json({
+      error: "Error al agregar producto al carrito",
+      details: error.message,
+    });
+  }
+};
+
+export const updateCantidadCarrito = async (req, res) => {
+  try {
+    const { usuario_id, producto_id, cantidad } = req.body;
+
+    if (!usuario_id || !producto_id || cantidad === undefined) {
+      return res.status(400).json({ error: "usuario_id, producto_id y cantidad son obligatorios" });
+    }
+    const [existente] = await connect.query(
+      `SELECT * FROM carrito WHERE usuario_id = ? AND producto_id = ?`,
+      [usuario_id, producto_id]
+    );
+
+    if (existente.length === 0) {
+      return res.status(404).json({ error: "El producto no existe en el carrito" });
+    }
+
+    await connect.query(
+      `UPDATE carrito SET cantidad = ? WHERE usuario_id = ? AND producto_id = ?`,
+      [cantidad, usuario_id, producto_id]
+    );
+
+    res.status(200).json({
+      message: "✅ Cantidad actualizada correctamente",
+      usuario_id,
+      producto_id,
+      cantidad
+    });
+  } catch (error) {
+    console.error("❌ Error al actualizar cantidad:", error);
+    res.status(500).json({
+      error: "Error al actualizar cantidad en el carrito",
+      details: error.message
+    });
+  }
+};
+export const deleteProductoCarrito = async (req, res) => {
+  try {
+    const { usuario_id, producto_id } = req.body;
+
+    if (!usuario_id || !producto_id) {
+      return res.status(400).json({ error: "usuario_id y producto_id son obligatorios" });
+    }
+
+    const [result] = await connect.query(
+      `DELETE FROM carrito WHERE usuario_id = ? AND producto_id = ?`,
+      [usuario_id, producto_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "❌ Producto no encontrado en el carrito" });
+    }
+
+    res.status(200).json({
+      message: "🗑️ Producto eliminado del carrito correctamente",
+      usuario_id,
+      producto_id
+    });
+  } catch (error) {
+    console.error("❌ Error al eliminar producto del carrito:", error);
+    res.status(500).json({
+      error: "Error al eliminar producto del carrito",
+      details: error.message
+    });
+  }
+};
+
+// 🧹 Vaciar todo el carrito de un usuario
+export const clearCarrito = async (req, res) => {
+  try {
+    const { usuario_id } = req.body;
+
+    if (!usuario_id) {
+      return res.status(400).json({ error: "usuario_id es obligatorio" });
+    }
+
+    const [result] = await connect.query(
+      `DELETE FROM carrito WHERE usuario_id = ?`,
+      [usuario_id]
+    );
+
+    res.status(200).json({
+      message: "🗑️ Carrito vaciado correctamente",
+      usuario_id,
+      deletedItems: result.affectedRows
+    });
+  } catch (error) {
+    console.error("❌ Error al vaciar el carrito:", error);
+    res.status(500).json({
+      error: "Error al vaciar el carrito",
+      details: error.message
+    });
   }
 };
