@@ -171,6 +171,7 @@ export const getCategoriasConProductos = async (req, res) => {
     const sqlQuery = `
       SELECT c.id AS categoria_id, c.nom AS categoria_nom,
              p.id AS producto_id, p.nom AS producto_nom, 
+             p.descripcion, 
              p.precio, p.imagen
       FROM categoria c
       LEFT JOIN productos p ON c.id = p.id_categoria
@@ -191,6 +192,7 @@ export const getCategoriasConProductos = async (req, res) => {
         categorias[row.categoria_id].productos.push({
           id: row.producto_id,
           nom: row.producto_nom,
+          descripcion: row.descripcion,  // 🔹 agregar aquí
           precio: row.precio,
           imagen: row.imagen,
         });
