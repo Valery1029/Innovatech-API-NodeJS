@@ -18,8 +18,6 @@ import {
   confirmacionPago
 } from "../controllers/productos.controller.js";
 
-import { prepararPago } from "../controllers/pago.controller.js";
-
 const router = Router();
 const apiName = "/productos";
 
