@@ -1,7 +1,6 @@
 
 import { connect } from '../config/db/connect.js';
-
-
+import crypto from 'crypto';
 
 // GET
 export const showProductos = async (req, res) => {
@@ -570,5 +569,130 @@ export const clearCarritoByUserId = async (req, res) => {
       error: "Error al vaciar el carrito",
       details: error.message
     });
+  }
+};
+
+export const prepararPago = async (req, res) => {
+  try {
+    const { usuario_id, email } = req.body;
+
+    if (!usuario_id || !email) {
+      return res.status(400).json({ 
+        error: "usuario_id y email son obligatorios" 
+      });
+    }
+
+    // 1️⃣ Obtener el carrito del usuario
+    const [carrito] = await connect.query(
+      `SELECT 
+        c.producto_id,
+        c.cantidad,
+        p.precio,
+        p.nom,
+        (p.precio * c.cantidad) AS total_producto
+      FROM carrito c
+      JOIN productos p ON c.producto_id = p.id
+      WHERE c.usuario_id = ?`,
+      [usuario_id]
+    );
+
+    if (carrito.length === 0) {
+      return res.status(404).json({ 
+        error: "El carrito está vacío" 
+      });
+    }
+
+    // 2️Calcular el total
+    const totalAmount = carrito.reduce((acc, item) => acc + item.total_producto, 0);
+
+    // 3Configuración de PayU (IMPORTANTE: Usar tus credenciales reales)
+    const merchantId = "508029";  // 🔹 Cambia por tu merchantId
+    const accountId = "512321";   // 🔹 Cambia por tu accountId
+    const apiKey = "4Vj8eK4rloUd272L48hsrarnUA";  // 🔹 Cambia por tu apiKey
+    const currency = "COP";
+    const referenceCode = `REF_${usuario_id}_${Date.now()}`;
+
+    //  Generar signature (firma de seguridad)
+    const signatureString = `${apiKey}~${merchantId}~${referenceCode}~${totalAmount}~${currency}`;
+    const signature = crypto.createHash('md5').update(signatureString).digest('hex');
+
+    // 5URLs de respuesta (IMPORTANTE: Cambia por tus URLs reales)
+    const baseUrl = "https://innovatech-api.onrender.com/api_v1"; // 🔹 Cambia esto
+    const responseUrl = `${baseUrl}/api/productos/carrito/respuesta-pago`;
+    const confirmationUrl = `${baseUrl}/api/productos/carrito/confirmacion-pago`;
+
+    // 6️⃣ Devolver los datos para el formulario
+    res.status(200).json({
+      merchantId,
+      accountId,
+      description: `Compra de ${carrito.length} producto(s)`,
+      referenceCode,
+      amount: totalAmount,
+      tax: "0",
+      taxReturnBase: "0",
+      currency,
+      signature,
+      test: "1",  // 🔹 Cambiar a "0" en producción
+      email,
+      responseUrl,
+      confirmationUrl,
+      urlPayU: "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/"  // 🔹 URL de pruebas
+      // En producción usar: "https://checkout.payulatam.com/ppp-web-gateway-payu/"
+    });
+
+  } catch (error) {
+    console.error("❌ Error al preparar pago:", error);
+    res.status(500).json({
+      error: "Error al preparar el pago",
+      details: error.message
+    });
+  }
+};
+
+
+// 🔹 Endpoint para recibir respuesta de PayU (página de respuesta)
+export const respuestaPago = async (req, res) => {
+  try {
+    const { 
+      referenceCode, 
+      transactionState, 
+      TX_VALUE, 
+      currency,
+      lapTransactionState 
+    } = req.query;
+
+    console.log("📥 Respuesta de PayU recibida:", req.query);
+
+    // Aquí puedes guardar el resultado en tu base de datos
+    
+    res.send(`
+      <html>
+        <head><title>Resultado del Pago</title></head>
+        <body>
+          <h1>Pago procesado</h1>
+          <p>Referencia: ${referenceCode}</p>
+          <p>Estado: ${transactionState}</p>
+          <p>Monto: ${TX_VALUE} ${currency}</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("❌ Error en respuesta de pago:", error);
+    res.status(500).json({ error: "Error al procesar respuesta" });
+  }
+};
+
+
+// 🔹 Endpoint para confirmación de PayU (notificación automática)
+export const confirmacionPago = async (req, res) => {
+  try {
+    console.log("🔔 Confirmación de PayU:", req.body);
+    
+    // Aquí validarías la firma y actualizarías tu base de datos
+    
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("❌ Error en confirmación:", error);
+    res.status(500).send("ERROR");
   }
 };

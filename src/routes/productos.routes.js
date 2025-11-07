@@ -12,7 +12,10 @@ import {
   updateCantidadCarrito,
   deleteProductoCarrito,
   clearCarrito,
-  clearCarritoByUserId  
+  clearCarritoByUserId,
+  prepararPago,
+  respuestaPago,
+  confirmacionPago
 } from "../controllers/productos.controller.js";
 
 import { prepararPago } from "../controllers/pago.controller.js";
@@ -43,8 +46,9 @@ router.put(`${apiName}/carrito/actualizar`, updateCantidadCarrito);
 // 🗑️ Eliminar producto del carrito
 router.delete(`${apiName}/carrito/eliminar`, deleteProductoCarrito);
 
-// 💳 Preparar pago con PayU
 router.post(`${apiName}/carrito/preparar-pago`, prepararPago);
+router.get('/carrito/respuesta-pago', respuestaPago);
+router.post('/carrito/confirmacion-pago', confirmacionPago);
 
 router.post(`${apiName}/carrito/clear`, clearCarrito);
 
