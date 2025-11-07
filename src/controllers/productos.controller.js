@@ -543,3 +543,32 @@ export const clearCarrito = async (req, res) => {
     });
   }
 };
+
+export const clearCarritoByUserId = async (req, res) => {
+  try {
+    const { usuario_id } = req.params;
+
+    if (!usuario_id) {
+      return res.status(400).json({ error: "usuario_id es obligatorio" });
+    }
+
+    const [result] = await connect.query(
+      `DELETE FROM carrito WHERE usuario_id = ?`,
+      [usuario_id]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "🗑️ Carrito vaciado correctamente",
+      usuario_id,
+      deletedItems: result.affectedRows
+    });
+  } catch (error) {
+    console.error("❌ Error al vaciar el carrito:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error al vaciar el carrito",
+      details: error.message
+    });
+  }
+};

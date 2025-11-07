@@ -11,7 +11,8 @@ import {
   addProductoAlCarrito,
   updateCantidadCarrito,
   deleteProductoCarrito,
-  clearCarrito
+  clearCarrito,
+  clearCarritoByUserId  
 } from "../controllers/productos.controller.js";
 
 import { prepararPago } from "../controllers/pago.controller.js";
@@ -46,5 +47,7 @@ router.delete(`${apiName}/carrito/eliminar`, deleteProductoCarrito);
 router.post(`${apiName}/carrito/preparar-pago`, prepararPago);
 
 router.post(`${apiName}/carrito/clear`, clearCarrito);
+
+router.delete('/carrito/:usuario_id', clearCarritoByUserId); 
 
 export default router;
