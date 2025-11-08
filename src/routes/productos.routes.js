@@ -37,19 +37,16 @@ router.route(`${apiName}/:id`)
 // 🛒 CARRITO
 router.get(`${apiName}/carrito/:usuario_id`, getCarritoUsuario); 
 router.post(`${apiName}/carrito/agregar`, addProductoAlCarrito);
-
-// ✏️ Actualizar cantidad de producto en carrito
 router.put(`${apiName}/carrito/actualizar`, updateCantidadCarrito);
-
-// 🗑️ Eliminar producto del carrito
 router.delete(`${apiName}/carrito/eliminar`, deleteProductoCarrito);
 
+// 🧹 VACIAR CARRITO (POST)
+router.post(`${apiName}/carrito/borrar/:usuario_id`, clearCarritoByUserId);
+router.post(`${apiName}/carrito/clear/:usuario_id`, clearCarrito);
+
+// 💳 PAGO
 router.post(`${apiName}/carrito/preparar-pago`, prepararPago);
-router.get('/carrito/respuesta-pago', respuestaPago);
-router.post('/carrito/confirmacion-pago', confirmacionPago);
-
-router.post(`${apiName}/carrito/clear`, clearCarrito);
-
-router.delete('/carrito/:usuario_id', clearCarritoByUserId); 
+router.get(`${apiName}/carrito/respuesta-pago`, respuestaPago);
+router.post(`${apiName}/carrito/confirmacion-pago`, confirmacionPago);
 
 export default router;

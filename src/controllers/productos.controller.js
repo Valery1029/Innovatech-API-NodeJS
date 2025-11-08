@@ -547,7 +547,10 @@ export const clearCarritoByUserId = async (req, res) => {
     const { usuario_id } = req.params;
 
     if (!usuario_id) {
-      return res.status(400).json({ error: "usuario_id es obligatorio" });
+      return res.status(400).json({ 
+        success: false,
+        error: "usuario_id es obligatorio" 
+      });
     }
 
     const [result] = await connect.query(
@@ -555,12 +558,15 @@ export const clearCarritoByUserId = async (req, res) => {
       [usuario_id]
     );
 
+    console.log(`✅ Carrito vaciado para usuario ${usuario_id}: ${result.affectedRows} productos eliminados`);
+
     res.status(200).json({
       success: true,
-      message: "🗑️ Carrito vaciado correctamente",
+      message: "Carrito vaciado correctamente",
       usuario_id,
       deletedItems: result.affectedRows
     });
+    
   } catch (error) {
     console.error("❌ Error al vaciar el carrito:", error);
     res.status(500).json({
@@ -614,9 +620,7 @@ export const prepararPago = async (req, res) => {
     //  Generar signature (firma de seguridad)
     const signatureString = `${apiKey}~${merchantId}~${referenceCode}~${totalAmount}~${currency}`;
     const signature = crypto.createHash('md5').update(signatureString).digest('hex');
-
-    // 5URLs de respuesta (IMPORTANTE: Cambia por tus URLs reales)
-    const baseUrl = "https://innovatech-api.onrender.com/api_v1"; // 🔹 Cambia esto
+    const baseUrl = "https://innovatech-api-nodejs.onrender.com/api_v1"; 
     const responseUrl = `${baseUrl}/api/productos/carrito/respuesta-pago`;
     const confirmationUrl = `${baseUrl}/api/productos/carrito/confirmacion-pago`;
 
@@ -652,34 +656,52 @@ export const prepararPago = async (req, res) => {
 // 🔹 Endpoint para recibir respuesta de PayU (página de respuesta)
 export const respuestaPago = async (req, res) => {
   try {
-    const { 
-      referenceCode, 
-      transactionState, 
-      TX_VALUE, 
-      currency,
-      lapTransactionState 
-    } = req.query;
+    const { transactionState, referenceCode, TX_VALUE } = req.query;
 
-    console.log("📥 Respuesta de PayU recibida:", req.query);
+    console.log("✅ Pago recibido:", { transactionState, referenceCode, TX_VALUE });
 
-    // Aquí puedes guardar el resultado en tu base de datos
+    // Guardar en base de datos si lo necesitas
     
     res.send(`
+      <!DOCTYPE html>
       <html>
-        <head><title>Resultado del Pago</title></head>
+        <head>
+          <meta charset="UTF-8">
+          <title>Pago Procesado</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+            }
+            .container {
+              text-align: center;
+              padding: 40px;
+            }
+            .check { font-size: 80px; }
+          </style>
+        </head>
         <body>
-          <h1>Pago procesado</h1>
-          <p>Referencia: ${referenceCode}</p>
-          <p>Estado: ${transactionState}</p>
-          <p>Monto: ${TX_VALUE} ${currency}</p>
+          <div class="container">
+            <div class="check">✅</div>
+            <h2>${transactionState === '4' ? '¡Pago Aprobado!' : 'Pago Procesado'}</h2>
+            <p>Referencia: ${referenceCode}</p>
+            <p>Volviendo a la aplicación...</p>
+          </div>
         </body>
       </html>
     `);
   } catch (error) {
-    console.error("❌ Error en respuesta de pago:", error);
-    res.status(500).json({ error: "Error al procesar respuesta" });
+    console.error("❌ Error:", error);
+    res.status(500).send("Error");
   }
 };
+
 
 
 // 🔹 Endpoint para confirmación de PayU (notificación automática)
