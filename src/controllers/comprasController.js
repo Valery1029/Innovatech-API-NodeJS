@@ -5,7 +5,7 @@ import { connect } from '../config/db/connect.js';
  * 
  * @route GET /api_v1/usuario/compras/:id
  * @param {number} id - ID del usuario
- * @returns {Array} Lista de facturas con factura_json parseado
+ * @returns {Array} Lista de facturas con factura_json parseado y total calculado
  */
 export const getComprasByUsuario = async (req, res) => {
   try {
@@ -38,7 +38,7 @@ export const getComprasByUsuario = async (req, res) => {
       return res.status(200).json([]); // Devolver array vacío
     }
 
-    // Parsear factura_json si está como string
+    // Parsear factura_json y calcular totales
     const compras = result.map(compra => {
       let facturaJson = compra.factura_json;
 
@@ -49,17 +49,50 @@ export const getComprasByUsuario = async (req, res) => {
         } catch (e) {
           console.error(`❌ Error parseando factura_json para factura ${compra.numero}:`, e);
           facturaJson = {
-            numbering_range: {},
-            items: []
+            request: {},
+            response: {}
           };
         }
       }
+
+      // ✅ CALCULAR TOTAL desde la respuesta de Factus
+      let total = 0;
+      
+      // Intentar obtener el total de diferentes ubicaciones posibles
+      if (facturaJson.response?.bill?.total) {
+        // Total desde response.bill.total
+        total = parseFloat(facturaJson.response.bill.total) || 0;
+      } else if (facturaJson.response?.total) {
+        // Total desde response.total
+        total = parseFloat(facturaJson.response.total) || 0;
+      } else if (facturaJson.bill?.total) {
+        // Total desde bill.total
+        total = parseFloat(facturaJson.bill.total) || 0;
+      } else if (facturaJson.total) {
+        // Total directo
+        total = parseFloat(facturaJson.total) || 0;
+      } else if (facturaJson.response?.items && Array.isArray(facturaJson.response.items)) {
+        // Calcular desde items si no hay total
+        facturaJson.response.items.forEach(item => {
+          const itemTotal = parseFloat(item.total || item.price || 0);
+          total += itemTotal;
+        });
+      } else if (facturaJson.items && Array.isArray(facturaJson.items)) {
+        // Calcular desde items directo
+        facturaJson.items.forEach(item => {
+          const itemTotal = parseFloat(item.total || item.price || 0);
+          total += itemTotal;
+        });
+      }
+
+      console.log(`📄 Factura ${compra.numero} - Total calculado: ${total}`);
 
       return {
         id: compra.id,
         numero: compra.numero || '',
         reference_code: compra.reference_code,
         factura_json: facturaJson,
+        total: total, // ✅ TOTAL CALCULADO
         usuario_id: compra.usuario_id,
         created_at: compra.created_at,
         updated_at: compra.updated_at
@@ -84,7 +117,7 @@ export const getComprasByUsuario = async (req, res) => {
  * 
  * @route GET /api_v1/factura/:numero
  * @param {string} numero - Número de la factura (ej: SETP990015266)
- * @returns {Object} Factura con factura_json parseado
+ * @returns {Object} Factura con factura_json parseado y total calculado
  */
 export const getFacturaByNumero = async (req, res) => {
   try {
@@ -130,11 +163,29 @@ export const getFacturaByNumero = async (req, res) => {
       }
     }
 
+    // ✅ CALCULAR TOTAL
+    let total = 0;
+    
+    if (facturaJson.response?.bill?.total) {
+      total = parseFloat(facturaJson.response.bill.total) || 0;
+    } else if (facturaJson.response?.total) {
+      total = parseFloat(facturaJson.response.total) || 0;
+    } else if (facturaJson.bill?.total) {
+      total = parseFloat(facturaJson.bill.total) || 0;
+    } else if (facturaJson.total) {
+      total = parseFloat(facturaJson.total) || 0;
+    } else if (facturaJson.response?.items) {
+      facturaJson.response.items.forEach(item => {
+        total += parseFloat(item.total || item.price || 0);
+      });
+    }
+
     res.status(200).json({
       id: factura.id,
       numero: factura.numero,
       reference_code: factura.reference_code,
       factura_json: facturaJson,
+      total: total, // ✅ TOTAL CALCULADO
       usuario_id: factura.usuario_id,
       created_at: factura.created_at,
       updated_at: factura.updated_at
@@ -206,12 +257,18 @@ export const getComprasStats = async (req, res) => {
         }
       }
 
-      // Calcular total desde items
-      if (facturaJson.items && Array.isArray(facturaJson.items)) {
-        facturaJson.items.forEach(item => {
-          const precio = parseFloat(item.price || 0);
-          const cantidad = parseInt(item.quantity || 0);
-          montoTotal += precio * cantidad;
+      // Extraer total
+      if (facturaJson.response?.bill?.total) {
+        montoTotal += parseFloat(facturaJson.response.bill.total) || 0;
+      } else if (facturaJson.response?.total) {
+        montoTotal += parseFloat(facturaJson.response.total) || 0;
+      } else if (facturaJson.bill?.total) {
+        montoTotal += parseFloat(facturaJson.bill.total) || 0;
+      } else if (facturaJson.total) {
+        montoTotal += parseFloat(facturaJson.total) || 0;
+      } else if (facturaJson.response?.items) {
+        facturaJson.response.items.forEach(item => {
+          montoTotal += parseFloat(item.total || item.price || 0);
         });
       }
     });
@@ -289,11 +346,24 @@ export const getComprasByFecha = async (req, res) => {
         }
       }
 
+      // Calcular total
+      let total = 0;
+      if (facturaJson.response?.bill?.total) {
+        total = parseFloat(facturaJson.response.bill.total) || 0;
+      } else if (facturaJson.response?.total) {
+        total = parseFloat(facturaJson.response.total) || 0;
+      } else if (facturaJson.response?.items) {
+        facturaJson.response.items.forEach(item => {
+          total += parseFloat(item.total || item.price || 0);
+        });
+      }
+
       return {
         id: compra.id,
         numero: compra.numero || '',
         reference_code: compra.reference_code,
         factura_json: facturaJson,
+        total: total,
         usuario_id: compra.usuario_id,
         created_at: compra.created_at,
         updated_at: compra.updated_at
