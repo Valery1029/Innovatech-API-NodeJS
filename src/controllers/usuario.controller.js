@@ -18,12 +18,30 @@ export const showUsuarios = async (req, res) => {
 // GET BY ID
 export const showUsuarioId = async (req, res) => {
   try {
-    const [result] = await connect.query("SELECT * FROM usuario WHERE id_usuario = ?", [req.params.id]);
+    const [result] = await connect.query(
+      "SELECT * FROM usuario WHERE id_usuario = ?", 
+      [req.params.id]
+    );
 
-    if (result.length === 0) return res.status(404).json({ error: "Usuario not found" });
-    res.status(200).json(result[0]);
+    if (result.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Usuario no encontrado" 
+      });
+    }
+
+    // Retornar en formato consistente
+    res.status(200).json({
+      success: true,
+      user: result[0]
+    });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching usuario", details: error.message });
+    console.error("❌ Error obteniendo usuario:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Error al obtener usuario", 
+      details: error.message 
+    });
   }
 };
 
