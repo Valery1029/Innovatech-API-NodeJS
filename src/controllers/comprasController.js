@@ -2,10 +2,6 @@ import { connect } from '../config/db/connect.js';
 
 /**
  * Obtiene todas las compras/facturas de un usuario específico
- * 
- * @route GET /api_v1/usuario/compras/:id
- * @param {number} id - ID del usuario
- * @returns {Array} Lista de facturas con factura_json parseado y total calculado
  */
 export const getComprasByUsuario = async (req, res) => {
   try {
@@ -35,7 +31,7 @@ export const getComprasByUsuario = async (req, res) => {
 
     if (result.length === 0) {
       console.log(`ℹ️ No hay compras para usuario ID ${id}`);
-      return res.status(200).json([]); // Devolver array vacío
+      return res.status(200).json([]);
     }
 
     // Parsear factura_json y calcular totales
@@ -48,44 +44,64 @@ export const getComprasByUsuario = async (req, res) => {
           facturaJson = JSON.parse(facturaJson);
         } catch (e) {
           console.error(`❌ Error parseando factura_json para factura ${compra.numero}:`, e);
-          facturaJson = {
-            request: {},
-            response: {}
-          };
+          facturaJson = {};
         }
       }
 
-      // ✅ CALCULAR TOTAL desde la respuesta de Factus
-      let total = 0;
-      
-      // Intentar obtener el total de diferentes ubicaciones posibles
-      if (facturaJson.response?.bill?.total) {
-        // Total desde response.bill.total
-        total = parseFloat(facturaJson.response.bill.total) || 0;
-      } else if (facturaJson.response?.total) {
-        // Total desde response.total
-        total = parseFloat(facturaJson.response.total) || 0;
-      } else if (facturaJson.bill?.total) {
-        // Total desde bill.total
-        total = parseFloat(facturaJson.bill.total) || 0;
-      } else if (facturaJson.total) {
-        // Total directo
-        total = parseFloat(facturaJson.total) || 0;
-      } else if (facturaJson.response?.items && Array.isArray(facturaJson.response.items)) {
-        // Calcular desde items si no hay total
-        facturaJson.response.items.forEach(item => {
-          const itemTotal = parseFloat(item.total || item.price || 0);
-          total += itemTotal;
-        });
-      } else if (facturaJson.items && Array.isArray(facturaJson.items)) {
-        // Calcular desde items directo
-        facturaJson.items.forEach(item => {
-          const itemTotal = parseFloat(item.total || item.price || 0);
-          total += itemTotal;
-        });
+      // ✅ FUNCIÓN RECURSIVA PARA BUSCAR EL TOTAL
+      function buscarTotal(obj, camino = '') {
+        if (!obj || typeof obj !== 'object') return null;
+        
+        // Buscar "total" directamente
+        if (obj.total !== undefined && obj.total !== null) {
+          const valor = parseFloat(obj.total);
+          if (!isNaN(valor) && valor > 0) {
+            console.log(`💰 Total encontrado en ${camino}.total: ${valor}`);
+            return valor;
+          }
+        }
+        
+        // Buscar en propiedades anidadas
+        for (const key in obj) {
+          if (typeof obj[key] === 'object' && obj[key] !== null) {
+            const found = buscarTotal(obj[key], camino ? `${camino}.${key}` : key);
+            if (found !== null) return found;
+          }
+        }
+        
+        return null;
       }
 
-      console.log(`📄 Factura ${compra.numero} - Total calculado: ${total}`);
+      let total = buscarTotal(facturaJson, 'root');
+
+      // Si no encontró el total, intentar calcularlo desde items
+      if (total === null || total === 0) {
+        console.log(`⚠️ Total no encontrado, calculando desde items...`);
+        
+        // Buscar items en diferentes ubicaciones
+        let items = null;
+        if (facturaJson.response?.items) items = facturaJson.response.items;
+        else if (facturaJson.items) items = facturaJson.items;
+        else if (facturaJson.response?.bill?.items) items = facturaJson.response.bill.items;
+        else if (facturaJson.bill?.items) items = facturaJson.bill.items;
+
+        if (items && Array.isArray(items)) {
+          total = 0;
+          items.forEach(item => {
+            const itemTotal = parseFloat(item.total || item.price || 0);
+            total += itemTotal;
+          });
+          console.log(`✅ Total calculado desde items: ${total}`);
+        }
+      }
+
+      // Si aún no hay total, usar 0
+      if (total === null || isNaN(total)) {
+        console.warn(`⚠️ No se pudo obtener total para factura ${compra.numero}, usando 0`);
+        total = 0;
+      }
+
+      console.log(`📄 Factura ${compra.numero} - Total final: ${total}`);
 
       return {
         id: compra.id,
@@ -114,10 +130,6 @@ export const getComprasByUsuario = async (req, res) => {
 
 /**
  * Obtiene una factura específica por su número
- * 
- * @route GET /api_v1/factura/:numero
- * @param {string} numero - Número de la factura (ej: SETP990015266)
- * @returns {Object} Factura con factura_json parseado y total calculado
  */
 export const getFacturaByNumero = async (req, res) => {
   try {
@@ -153,7 +165,6 @@ export const getFacturaByNumero = async (req, res) => {
     const factura = result[0];
     let facturaJson = factura.factura_json;
 
-    // Parsear factura_json si está como string
     if (typeof facturaJson === 'string') {
       try {
         facturaJson = JSON.parse(facturaJson);
@@ -163,29 +174,48 @@ export const getFacturaByNumero = async (req, res) => {
       }
     }
 
-    // ✅ CALCULAR TOTAL
-    let total = 0;
-    
-    if (facturaJson.response?.bill?.total) {
-      total = parseFloat(facturaJson.response.bill.total) || 0;
-    } else if (facturaJson.response?.total) {
-      total = parseFloat(facturaJson.response.total) || 0;
-    } else if (facturaJson.bill?.total) {
-      total = parseFloat(facturaJson.bill.total) || 0;
-    } else if (facturaJson.total) {
-      total = parseFloat(facturaJson.total) || 0;
-    } else if (facturaJson.response?.items) {
-      facturaJson.response.items.forEach(item => {
-        total += parseFloat(item.total || item.price || 0);
-      });
+    // Buscar total recursivamente
+    function buscarTotal(obj) {
+      if (!obj || typeof obj !== 'object') return null;
+      
+      if (obj.total !== undefined && obj.total !== null) {
+        const valor = parseFloat(obj.total);
+        if (!isNaN(valor) && valor > 0) return valor;
+      }
+      
+      for (const key in obj) {
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          const found = buscarTotal(obj[key]);
+          if (found !== null) return found;
+        }
+      }
+      
+      return null;
     }
+
+    let total = buscarTotal(facturaJson);
+
+    // Calcular desde items si no se encontró
+    if (total === null || total === 0) {
+      let items = facturaJson.response?.items || facturaJson.items || 
+                  facturaJson.response?.bill?.items || facturaJson.bill?.items;
+
+      if (items && Array.isArray(items)) {
+        total = 0;
+        items.forEach(item => {
+          total += parseFloat(item.total || item.price || 0);
+        });
+      }
+    }
+
+    if (total === null || isNaN(total)) total = 0;
 
     res.status(200).json({
       id: factura.id,
       numero: factura.numero,
       reference_code: factura.reference_code,
       factura_json: facturaJson,
-      total: total, // ✅ TOTAL CALCULADO
+      total: total,
       usuario_id: factura.usuario_id,
       created_at: factura.created_at,
       updated_at: factura.updated_at
@@ -195,187 +225,6 @@ export const getFacturaByNumero = async (req, res) => {
     console.error("❌ Error al obtener factura:", error);
     res.status(500).json({ 
       error: "Error al obtener factura", 
-      details: error.message 
-    });
-  }
-};
-
-/**
- * Obtiene estadísticas de compras de un usuario
- * 
- * @route GET /api_v1/usuario/compras/:id/stats
- * @param {number} id - ID del usuario
- * @returns {Object} Estadísticas (total compras, monto total, última compra)
- */
-export const getComprasStats = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ 
-        error: "ID de usuario es requerido" 
-      });
-    }
-
-    const sqlQuery = `
-      SELECT 
-        COUNT(*) as total_compras,
-        MAX(created_at) as ultima_compra
-      FROM facturas_compras
-      WHERE usuario_id = ?
-    `;
-
-    const [result] = await connect.query(sqlQuery, [id]);
-
-    if (result[0].total_compras === 0) {
-      return res.status(200).json({
-        stats: {
-          total_compras: 0,
-          monto_total: 0,
-          ultima_compra: null
-        }
-      });
-    }
-
-    // Obtener todas las facturas para calcular monto total
-    const [compras] = await connect.query(
-      "SELECT factura_json FROM facturas_compras WHERE usuario_id = ?",
-      [id]
-    );
-
-    let montoTotal = 0;
-
-    compras.forEach(compra => {
-      let facturaJson = compra.factura_json;
-      
-      if (typeof facturaJson === 'string') {
-        try {
-          facturaJson = JSON.parse(facturaJson);
-        } catch (e) {
-          console.error("Error parseando factura_json:", e);
-          return;
-        }
-      }
-
-      // Extraer total
-      if (facturaJson.response?.bill?.total) {
-        montoTotal += parseFloat(facturaJson.response.bill.total) || 0;
-      } else if (facturaJson.response?.total) {
-        montoTotal += parseFloat(facturaJson.response.total) || 0;
-      } else if (facturaJson.bill?.total) {
-        montoTotal += parseFloat(facturaJson.bill.total) || 0;
-      } else if (facturaJson.total) {
-        montoTotal += parseFloat(facturaJson.total) || 0;
-      } else if (facturaJson.response?.items) {
-        facturaJson.response.items.forEach(item => {
-          montoTotal += parseFloat(item.total || item.price || 0);
-        });
-      }
-    });
-
-    res.status(200).json({
-      stats: {
-        total_compras: result[0].total_compras,
-        monto_total: montoTotal,
-        ultima_compra: result[0].ultima_compra
-      }
-    });
-
-  } catch (error) {
-    console.error("❌ Error al obtener estadísticas:", error);
-    res.status(500).json({ 
-      error: "Error al obtener estadísticas", 
-      details: error.message 
-    });
-  }
-};
-
-/**
- * Obtiene compras filtradas por rango de fechas
- * 
- * @route GET /api_v1/usuario/compras/:id/fecha?desde=2025-01-01&hasta=2025-12-31
- * @param {number} id - ID del usuario
- * @query {string} desde - Fecha inicio (YYYY-MM-DD)
- * @query {string} hasta - Fecha fin (YYYY-MM-DD)
- * @returns {Array} Lista de compras en el rango de fechas
- */
-export const getComprasByFecha = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { desde, hasta } = req.query;
-
-    if (!id) {
-      return res.status(400).json({ 
-        error: "ID de usuario es requerido" 
-      });
-    }
-
-    let sqlQuery = `
-      SELECT 
-        id,
-        usuario_id,
-        reference_code,
-        factura_json,
-        numero,
-        created_at,
-        updated_at
-      FROM facturas_compras
-      WHERE usuario_id = ?
-    `;
-
-    const params = [id];
-
-    // Filtrar por fecha si se proporcionan
-    if (desde && hasta) {
-      sqlQuery += " AND DATE(created_at) BETWEEN ? AND ?";
-      params.push(desde, hasta);
-    }
-
-    sqlQuery += " ORDER BY created_at DESC";
-
-    const [result] = await connect.query(sqlQuery, params);
-
-    const compras = result.map(compra => {
-      let facturaJson = compra.factura_json;
-
-      if (typeof facturaJson === 'string') {
-        try {
-          facturaJson = JSON.parse(facturaJson);
-        } catch (e) {
-          facturaJson = {};
-        }
-      }
-
-      // Calcular total
-      let total = 0;
-      if (facturaJson.response?.bill?.total) {
-        total = parseFloat(facturaJson.response.bill.total) || 0;
-      } else if (facturaJson.response?.total) {
-        total = parseFloat(facturaJson.response.total) || 0;
-      } else if (facturaJson.response?.items) {
-        facturaJson.response.items.forEach(item => {
-          total += parseFloat(item.total || item.price || 0);
-        });
-      }
-
-      return {
-        id: compra.id,
-        numero: compra.numero || '',
-        reference_code: compra.reference_code,
-        factura_json: facturaJson,
-        total: total,
-        usuario_id: compra.usuario_id,
-        created_at: compra.created_at,
-        updated_at: compra.updated_at
-      };
-    });
-
-    res.status(200).json(compras);
-
-  } catch (error) {
-    console.error("❌ Error al obtener compras por fecha:", error);
-    res.status(500).json({ 
-      error: "Error al obtener compras", 
       details: error.message 
     });
   }
