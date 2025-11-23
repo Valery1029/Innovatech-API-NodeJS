@@ -18,7 +18,6 @@ let tokenExpiry = null;
  */
 async function getFactusToken() {
   try {
-    // Si ya tenemos un token válido, devolverlo
     if (accessToken && tokenExpiry && Date.now() < tokenExpiry) {
       console.log('✅ Usando token existente');
       return accessToken;
@@ -45,7 +44,8 @@ async function getFactusToken() {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(JSON.stringify(error));
+      console.error('❌ Error en autenticación:', error);
+      throw new Error(`Factus OAuth error: ${JSON.stringify(error)}`);
     }
 
     const data = await response.json();
@@ -74,7 +74,7 @@ export const crearFactura = async (req, res) => {
     console.log('🆔 Usuario:', facturaData.usuario_id);
     console.log('📝 Referencia:', facturaData.reference_code);
 
-    // Validar datos requeridos
+    // ✅ Validar datos requeridos
     if (!facturaData.customer || !facturaData.items || facturaData.items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -89,40 +89,109 @@ export const crearFactura = async (req, res) => {
       });
     }
 
-    // 1️⃣ Obtener token de Factus
-    const token = await getFactusToken();
+    // ✅ VALIDAR Y NORMALIZAR ITEMS
+    try {
+      facturaData.items = facturaData.items.map((item, index) => {
+        const itemValidado = {
+          scheme_id: item.scheme_id || "0",
+          note: item.note || "",
+          code_reference: String(item.code_reference || ""),
+          name: String(item.name || ""),
+          quantity: parseInt(item.quantity) || 0,
+          discount_rate: parseFloat(item.discount_rate) || 0,
+          price: parseFloat(item.price) || 0,
+          tax_rate: String(item.tax_rate || "19.00"),
+          unit_measure_id: parseInt(item.unit_measure_id) || 70,
+          standard_code_id: parseInt(item.standard_code_id) || 1,
+          is_excluded: parseInt(item.is_excluded) || 0,
+          tribute_id: parseInt(item.tribute_id) || 1,
+          withholding_taxes: Array.isArray(item.withholding_taxes) ? item.withholding_taxes : []
+        };
 
-    // 2️⃣ Crear factura en Factus
-    console.log('📄 Creando factura en Factus...');
+        // Validar valores críticos
+        if (!itemValidado.code_reference || !itemValidado.name) {
+          throw new Error(`Item ${index}: code_reference y name son requeridos`);
+        }
+        if (itemValidado.quantity <= 0) {
+          throw new Error(`Item ${index}: quantity debe ser mayor a 0`);
+        }
+        if (itemValidado.price <= 0) {
+          throw new Error(`Item ${index}: price debe ser mayor a 0`);
+        }
 
-    const response = await fetch(`${FACTUS_CONFIG.baseURL}/v1/bills/validate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(facturaData),
-    });
+        return itemValidado;
+      });
 
-    console.log('📡 Respuesta de Factus:', response.status);
-
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('❌ Error en Factus:', error);
-      return res.status(response.status).json({
+      console.log('✅ Items validados correctamente');
+    } catch (validationError) {
+      console.error('❌ Error validando items:', validationError.message);
+      return res.status(400).json({
         success: false,
-        message: error.message || 'Error al crear factura en Factus',
-        error: error,
+        message: 'Error de validación en items',
+        error: validationError.message,
       });
     }
 
-    const result = await response.json();
+    // 1️⃣ Obtener token de Factus
+    let token;
+    try {
+      token = await getFactusToken();
+    } catch (tokenError) {
+      console.error('❌ Error obteniendo token:', tokenError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error de autenticación con Factus',
+        error: tokenError.message,
+      });
+    }
+
+    // 2️⃣ Crear factura en Factus PRIMERO
+    console.log('📄 Creando factura en Factus...');
+    console.log('🔗 URL:', `${FACTUS_CONFIG.baseURL}/v1/bills/validate`);
+
+    let factusResponse;
+    try {
+      factusResponse = await fetch(`${FACTUS_CONFIG.baseURL}/v1/bills/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(facturaData),
+      });
+
+      console.log('📡 Respuesta de Factus:', factusResponse.status);
+
+      if (!factusResponse.ok) {
+        const error = await factusResponse.json();
+        console.error('❌ Error en Factus:', JSON.stringify(error, null, 2));
+        
+        // ❌ SI FACTUS FALLA, NO GUARDAR EN BD
+        return res.status(factusResponse.status).json({
+          success: false,
+          message: error.message || 'Error al crear factura en Factus',
+          error: error,
+        });
+      }
+
+    } catch (fetchError) {
+      console.error('❌ Error de conexión con Factus:', fetchError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error de conexión con Factus',
+        error: fetchError.message,
+      });
+    }
+
+    const result = await factusResponse.json();
     const factusData = result.data || result;
 
     console.log('✅ Factura creada exitosamente en Factus');
+    console.log('📄 Número:', factusData?.invoice_number || factusData?.number);
 
-    // 3️⃣ Guardar factura en base de datos
+    // 3️⃣ Guardar factura en base de datos (SOLO SI FACTUS APROBÓ)
+    let dbInsertId = null;
     try {
       console.log('💾 Guardando factura en base de datos...');
       
@@ -137,18 +206,19 @@ export const crearFactura = async (req, res) => {
       const [insertResult] = await connect.query(insertQuery, [
         facturaData.usuario_id,
         facturaData.reference_code,
-        JSON.stringify(factusData), // Guardar respuesta completa de Factus como JSON
+        JSON.stringify(factusData),
         invoiceNumber
       ]);
 
-      console.log('✅ Factura guardada en BD con ID:', insertResult.insertId);
+      dbInsertId = insertResult.insertId;
+      console.log('✅ Factura guardada en BD con ID:', dbInsertId);
       console.log('📄 Número de factura:', invoiceNumber);
 
     } catch (dbError) {
       console.error('❌ Error guardando en BD:', dbError);
-      // No fallar la respuesta si la factura se creó en Factus pero no se guardó en BD
-      // Esto permite que el usuario reciba su factura aunque haya un problema de BD
-      console.warn('⚠️ La factura se creó en Factus pero no se guardó en BD local');
+      console.error('📄 Stack:', dbError.stack);
+      // No fallar la respuesta - la factura ya está en Factus
+      console.warn('⚠️ La factura se creó en Factus pero NO se guardó en BD');
     }
 
     // 4️⃣ Responder con éxito
@@ -162,10 +232,13 @@ export const crearFactura = async (req, res) => {
         pdf_url: factusData?.pdf_url,
         xml_url: factusData?.xml_url,
         factus_response: factusData,
+        db_saved: dbInsertId !== null,
+        db_id: dbInsertId,
       },
     });
   } catch (error) {
     console.error('❌ Error en crearFactura:', error);
+    console.error('📄 Stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor',
