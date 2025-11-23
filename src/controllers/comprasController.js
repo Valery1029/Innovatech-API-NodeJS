@@ -2,8 +2,6 @@ import { connect } from '../config/db/connect.js';
 
 /**
  * Obtiene todas las compras/facturas de un usuario específico
- * Basado en la tabla factura_compra con los campos:
- * id, usuario_id, reference_code, factura_json, created_at, updated_at, numero
  * 
  * @route GET /api_v1/usuario/compras/:id
  * @param {number} id - ID del usuario
@@ -19,7 +17,6 @@ export const getComprasByUsuario = async (req, res) => {
       });
     }
 
-    // Query adaptado a tu tabla actual
     const sqlQuery = `
       SELECT 
         id,
@@ -38,7 +35,7 @@ export const getComprasByUsuario = async (req, res) => {
 
     if (result.length === 0) {
       console.log(`ℹ️ No hay compras para usuario ID ${id}`);
-      return res.status(200).json([]); // Devolver array vacío en lugar de 404
+      return res.status(200).json([]); // Devolver array vacío
     }
 
     // Parsear factura_json si está como string
