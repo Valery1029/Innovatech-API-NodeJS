@@ -24,6 +24,7 @@ import productosRoutes from '../routes/productos.routes.js';
 import ofertasRoutes from '../routes/ofertas.routes.js';
 import pqrsRoutes from '../routes/pqrs.routes.js';
 import comprasRoutes from '../routes/comprasRoutes.js';
+import facturaRoutes from '../routes/facturaRoutes.js';
 
 const app = express();
 //Middleware
@@ -54,6 +55,7 @@ app.use('/api_v1', productosRoutes);
 app.use('/api_v1', ofertasRoutes);
 app.use('/api_v1', pqrsRoutes);
 app.use('/api_v1', comprasRoutes);
+app.use('/api_v1', facturaRoutes);
 
 app.use((rep, res, nex) => {
   res.status(404).json ({
