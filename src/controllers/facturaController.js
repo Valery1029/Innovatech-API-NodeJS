@@ -1,6 +1,6 @@
 import { connect } from '../config/db/connect.js';
 
-// 🔑 Configuración de Factus
+
 const FACTUS_CONFIG = {
   baseURL: process.env.FACTUS_API_URL || 'https://api-sandbox.factus.com.co',
   clientId: process.env.FACTUS_CLIENT_ID || '9dec2e75-714c-4902-82d7-dc1fa93474c7',
@@ -19,11 +19,9 @@ let tokenExpiry = null;
 async function getFactusToken() {
   try {
     if (accessToken && tokenExpiry && Date.now() < tokenExpiry) {
-      console.log('✅ Usando token existente');
       return accessToken;
     }
 
-    console.log('🔑 Solicitando nuevo token a Factus...');
 
     const formData = new URLSearchParams({
       grant_type: 'password',
@@ -44,7 +42,7 @@ async function getFactusToken() {
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('❌ Error en autenticación:', error);
+      console.error('Error en autenticación:', error);
       throw new Error(`Factus OAuth error: ${JSON.stringify(error)}`);
     }
 
@@ -53,11 +51,11 @@ async function getFactusToken() {
     const expiresIn = data.expires_in || 3600;
     tokenExpiry = Date.now() + (expiresIn * 1000);
 
-    console.log(`✅ Token obtenido, válido por ${expiresIn} segundos`);
+    console.log(`Token obtenido, válido por ${expiresIn} segundos`);
 
     return accessToken;
   } catch (error) {
-    console.error('❌ Error obteniendo token:', error.message);
+    console.error('Error obteniendo token:', error.message);
     throw new Error('No se pudo autenticar con Factus');
   }
 }
@@ -70,11 +68,10 @@ export const crearFactura = async (req, res) => {
   try {
     const facturaData = req.body;
 
-    console.log('📋 Solicitud de factura recibida');
-    console.log('🆔 Usuario:', facturaData.usuario_id);
-    console.log('📝 Referencia:', facturaData.reference_code);
+    console.log('Solicitud de factura recibida');
+    console.log('Usuario:', facturaData.usuario_id);
+    console.log('Referencia:', facturaData.reference_code);
 
-    // ✅ Validar datos requeridos
     if (!facturaData.customer || !facturaData.items || facturaData.items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -89,7 +86,6 @@ export const crearFactura = async (req, res) => {
       });
     }
 
-    // ✅ VALIDAR Y NORMALIZAR ITEMS
     try {
       facturaData.items = facturaData.items.map((item, index) => {
         const itemValidado = {
@@ -121,9 +117,8 @@ export const crearFactura = async (req, res) => {
         return itemValidado;
       });
 
-      console.log('✅ Items validados correctamente');
     } catch (validationError) {
-      console.error('❌ Error validando items:', validationError.message);
+      console.error('Error validando items:', validationError.message);
       return res.status(400).json({
         success: false,
         message: 'Error de validación en items',
@@ -131,22 +126,17 @@ export const crearFactura = async (req, res) => {
       });
     }
 
-    // 1️⃣ Obtener token de Factus
     let token;
     try {
       token = await getFactusToken();
     } catch (tokenError) {
-      console.error('❌ Error obteniendo token:', tokenError);
+      console.error('Error obteniendo token:', tokenError);
       return res.status(500).json({
         success: false,
         message: 'Error de autenticación con Factus',
         error: tokenError.message,
       });
     }
-
-    // 2️⃣ Crear factura en Factus PRIMERO
-    console.log('📄 Creando factura en Factus...');
-    console.log('🔗 URL:', `${FACTUS_CONFIG.baseURL}/v1/bills/validate`);
 
     let factusResponse;
     let factusJsonResponse;
@@ -162,16 +152,14 @@ export const crearFactura = async (req, res) => {
         body: JSON.stringify(facturaData),
       });
 
-      console.log('📡 Respuesta de Factus - Status:', factusResponse.status);
 
       factusJsonResponse = await factusResponse.json();
       
-      // ✅ MOSTRAR RESPUESTA COMPLETA PARA DEBUG
       console.log('📋 Respuesta Factus completa:', JSON.stringify(factusJsonResponse, null, 2));
 
       if (!factusResponse.ok) {
         const error = factusJsonResponse;
-        console.error('❌ Error en Factus:', JSON.stringify(error, null, 2));
+        console.error('Error en Factus:', JSON.stringify(error, null, 2));
         
         return res.status(factusResponse.status).json({
           success: false,
@@ -181,7 +169,7 @@ export const crearFactura = async (req, res) => {
       }
 
     } catch (fetchError) {
-      console.error('❌ Error de conexión con Factus:', fetchError);
+      console.error('Error de conexión con Factus:', fetchError);
       return res.status(500).json({
         success: false,
         message: 'Error de conexión con Factus',
@@ -189,7 +177,6 @@ export const crearFactura = async (req, res) => {
       });
     }
 
-    // ✅ BUSCAR RECURSIVAMENTE EL INVOICE_NUMBER
     console.log('🔍 Buscando invoice_number en respuesta...');
     
     function buscarInvoiceNumber(obj, path = 'root') {
@@ -197,11 +184,11 @@ export const crearFactura = async (req, res) => {
       
       // Buscar directamente en el objeto
       if (obj.invoice_number) {
-        console.log(`✅ Encontrado en ${path}.invoice_number:`, obj.invoice_number);
+        console.log(`Encontrado en ${path}.invoice_number:`, obj.invoice_number);
         return obj.invoice_number;
       }
       if (obj.number) {
-        console.log(`✅ Encontrado en ${path}.number:`, obj.number);
+        console.log(`Encontrado en ${path}.number:`, obj.number);
         return obj.number;
       }
       
@@ -219,25 +206,20 @@ export const crearFactura = async (req, res) => {
     let invoiceNumber = buscarInvoiceNumber(factusJsonResponse);
     
     if (!invoiceNumber) {
-      console.error('❌ No se encontró invoice_number en toda la respuesta');
-      console.error('📋 Claves en respuesta:', Object.keys(factusJsonResponse));
+      console.error('No se encontró invoice_number en toda la respuesta');
+      console.error('Claves en respuesta:', Object.keys(factusJsonResponse));
       invoiceNumber = `TEMP-${Date.now()}`;
-      console.log('⚠️ Usando número temporal:', invoiceNumber);
+      console.log('Usando número temporal:', invoiceNumber);
     }
 
     // Obtener data para guardar (toda la respuesta)
     const factusData = factusJsonResponse.data || factusJsonResponse;
 
-    console.log('✅ Factura creada exitosamente en Factus');
-    console.log('📄 Número final:', invoiceNumber);
+    console.log('Factura creada exitosamente en Factus');
+    console.log('Número final:', invoiceNumber);
 
-    // 3️⃣ Guardar factura en base de datos
     let dbInsertId = null;
     try {
-      console.log('💾 Preparando para guardar en BD...');
-      console.log('   - Usuario ID:', facturaData.usuario_id);
-      console.log('   - Reference Code:', facturaData.reference_code);
-      console.log('   - Invoice Number:', invoiceNumber);
 
       const insertQuery = `
         INSERT INTO facturas_compras 
@@ -253,18 +235,14 @@ export const crearFactura = async (req, res) => {
       ]);
 
       dbInsertId = insertResult.insertId;
-      console.log('✅ Factura guardada en BD exitosamente');
-      console.log('   - ID en BD:', dbInsertId);
-      console.log('   - Número de factura:', invoiceNumber);
 
     } catch (dbError) {
-      console.error('❌ Error guardando en BD:', dbError.message);
+      console.error('Error guardando en BD:', dbError.message);
       console.error('   - Código:', dbError.code);
       console.error('   - Stack:', dbError.stack);
-      console.warn('⚠️ Factura en Factus pero NO en BD local');
+      console.warn('Factura en Factus pero NO en BD local');
     }
 
-    // 4️⃣ Responder con éxito
     res.status(201).json({
       success: true,
       message: 'Factura creada exitosamente',
@@ -280,8 +258,8 @@ export const crearFactura = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('❌ Error crítico en crearFactura:', error.message);
-    console.error('📄 Stack:', error.stack);
+    console.error('Error crítico en crearFactura:', error.message);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor',
@@ -290,15 +268,12 @@ export const crearFactura = async (req, res) => {
   }
 };
 
-/**
- * GET /api_v1/facturas/:numero
- * Consulta una factura por su número
- */
+
 export const consultarFactura = async (req, res) => {
   try {
     const { numero } = req.params;
 
-    console.log(`🔍 Consultando factura: ${numero}`);
+    console.log(`Consultando factura: ${numero}`);
 
     const token = await getFactusToken();
 
@@ -309,7 +284,7 @@ export const consultarFactura = async (req, res) => {
       },
     });
 
-    console.log('📡 Status consulta:', response.status);
+    console.log('Status consulta:', response.status);
 
     if (!response.ok) {
       const error = await response.json();
@@ -321,14 +296,14 @@ export const consultarFactura = async (req, res) => {
     }
 
     const result = await response.json();
-    console.log('✅ Factura encontrada');
+    console.log('Factura encontrada');
 
     res.status(200).json({
       success: true,
       data: result.data || result,
     });
   } catch (error) {
-    console.error('❌ Error consultando factura:', error.message);
+    console.error('Error consultando factura:', error.message);
 
     res.status(500).json({
       success: false,
@@ -338,15 +313,11 @@ export const consultarFactura = async (req, res) => {
   }
 };
 
-/**
- * GET /api_v1/facturas/:numero/pdf
- * Descarga el PDF de una factura
- */
 export const descargarPDF = async (req, res) => {
   try {
     const { numero } = req.params;
 
-    console.log(`📥 Descargando PDF: ${numero}`);
+    console.log(`Descargando PDF: ${numero}`);
 
     const token = await getFactusToken();
 
@@ -364,13 +335,13 @@ export const descargarPDF = async (req, res) => {
     }
 
     const pdfBuffer = await response.arrayBuffer();
-    console.log('✅ PDF descargado correctamente');
+    console.log('PDF descargado correctamente');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="factura-${numero}.pdf"`);
     res.send(Buffer.from(pdfBuffer));
   } catch (error) {
-    console.error('❌ Error descargando PDF:', error.message);
+    console.error('Error descargando PDF:', error.message);
 
     res.status(500).json({
       success: false,
