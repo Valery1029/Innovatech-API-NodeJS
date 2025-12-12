@@ -54,8 +54,6 @@ export const getComprasByUsuario = async (req, res) => {
           };
         }
       }
-
-      // ✅ CALCULAR TOTAL desde la respuesta de Factus
       let total = 0;
       
       // Intentar obtener el total de diferentes ubicaciones posibles
@@ -92,14 +90,14 @@ export const getComprasByUsuario = async (req, res) => {
         numero: compra.numero || '',
         reference_code: compra.reference_code,
         factura_json: facturaJson,
-        total: total, // ✅ TOTAL CALCULADO
+        total: total, 
         usuario_id: compra.usuario_id,
         created_at: compra.created_at,
         updated_at: compra.updated_at
       };
     });
 
-    console.log(`✅ ${compras.length} compras encontradas para usuario ID ${id}`);
+    console.log(`${compras.length} compras encontradas para usuario ID ${id}`);
 
     res.status(200).json(compras);
 
@@ -112,13 +110,6 @@ export const getComprasByUsuario = async (req, res) => {
   }
 };
 
-/**
- * Obtiene una factura específica por su número
- * 
- * @route GET /api_v1/factura/:numero
- * @param {string} numero - Número de la factura (ej: SETP990015266)
- * @returns {Object} Factura con factura_json parseado y total calculado
- */
 export const getFacturaByNumero = async (req, res) => {
   try {
     const { numero } = req.params;
@@ -163,7 +154,6 @@ export const getFacturaByNumero = async (req, res) => {
       }
     }
 
-    // ✅ CALCULAR TOTAL
     let total = 0;
     
     if (facturaJson.response?.bill?.total) {
@@ -185,14 +175,14 @@ export const getFacturaByNumero = async (req, res) => {
       numero: factura.numero,
       reference_code: factura.reference_code,
       factura_json: facturaJson,
-      total: total, // ✅ TOTAL CALCULADO
+      total: total, 
       usuario_id: factura.usuario_id,
       created_at: factura.created_at,
       updated_at: factura.updated_at
     });
 
   } catch (error) {
-    console.error("❌ Error al obtener factura:", error);
+    console.error("Error al obtener factura:", error);
     res.status(500).json({ 
       error: "Error al obtener factura", 
       details: error.message 
@@ -200,13 +190,7 @@ export const getFacturaByNumero = async (req, res) => {
   }
 };
 
-/**
- * Obtiene estadísticas de compras de un usuario
- * 
- * @route GET /api_v1/usuario/compras/:id/stats
- * @param {number} id - ID del usuario
- * @returns {Object} Estadísticas (total compras, monto total, última compra)
- */
+
 export const getComprasStats = async (req, res) => {
   try {
     const { id } = req.params;
@@ -282,7 +266,7 @@ export const getComprasStats = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error al obtener estadísticas:", error);
+    console.error("Error al obtener estadísticas:", error);
     res.status(500).json({ 
       error: "Error al obtener estadísticas", 
       details: error.message 
@@ -373,7 +357,7 @@ export const getComprasByFecha = async (req, res) => {
     res.status(200).json(compras);
 
   } catch (error) {
-    console.error("❌ Error al obtener compras por fecha:", error);
+    console.error("Error al obtener compras por fecha:", error);
     res.status(500).json({ 
       error: "Error al obtener compras", 
       details: error.message 
