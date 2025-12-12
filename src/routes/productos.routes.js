@@ -21,7 +21,6 @@ import {
 const router = Router();
 const apiName = "/productos";
 
-// 📦 CRUD productos
 router.route(apiName)
   .get(showProductos)
   .post(addProductos);
@@ -34,17 +33,14 @@ router.route(`${apiName}/:id`)
   .put(updateProductos)
   .delete(deleteProductos);
 
-// 🛒 CARRITO
 router.get(`${apiName}/carrito/:usuario_id`, getCarritoUsuario); 
 router.post(`${apiName}/carrito/agregar`, addProductoAlCarrito);
 router.put(`${apiName}/carrito/actualizar`, updateCantidadCarrito);
 router.delete(`${apiName}/carrito/eliminar`, deleteProductoCarrito);
 
-// 🧹 VACIAR CARRITO (POST)
 router.post(`${apiName}/carrito/borrar/:usuario_id`, clearCarritoByUserId);
 router.post(`${apiName}/carrito/clear/:usuario_id`, clearCarrito);
 
-// 💳 PAGO
 router.post(`${apiName}/carrito/preparar-pago`, prepararPago);
 router.get(`${apiName}/carrito/respuesta-pago`, respuestaPago);
 router.post(`${apiName}/carrito/confirmacion-pago`, confirmacionPago);
