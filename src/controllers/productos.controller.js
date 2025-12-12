@@ -190,7 +190,7 @@ export const getCategoriasConProductos = async (req, res) => {
         categorias[row.categoria_id].productos.push({
           id: row.producto_id,
           nom: row.producto_nom,
-          descripcion: row.descripcion,  // 🔹 agregar aquí
+          descripcion: row.descripcion,
           precio: row.precio,
           imagen: row.imagen,
         });
@@ -265,7 +265,6 @@ export const searchProductos = async (req, res) => {
 
     const values = [];
 
-    // 🔎 búsqueda por nombre o descripción
     if (query) {
       sqlQuery += ` AND (
         p.nom LIKE ? 
@@ -275,7 +274,6 @@ export const searchProductos = async (req, res) => {
       values.push(`%${query}%`, `%${query}%`, `%${query}%`);
     }
 
-    // 💰 rangos de precio
     if (precioMin) {
       sqlQuery += ` AND p.precio >= ?`;
       values.push(precioMin);
@@ -285,7 +283,6 @@ export const searchProductos = async (req, res) => {
       values.push(precioMax);
     }
 
-    // 🔹 filtros de texto con LIKE (palabras parecidas)
     if (marca) {
       sqlQuery += ` AND m.nom LIKE ?`;
       values.push(`%${marca}%`);
@@ -317,7 +314,6 @@ export const searchProductos = async (req, res) => {
       values.push(almacenamiento);
     }
 
-    // Ejecutar consulta
     const [rows] = await connect.query(sqlQuery, values);
     res.json(rows);
   } catch (error) {
@@ -383,7 +379,6 @@ export const getCarritoUsuario = async (req, res) => {
       return res.status(404).json({ message: "El carrito está vacío o el usuario no existe." });
     }
 
-    // ✅ También calculamos el total general del carrito
     const total_general = rows.reduce((acc, item) => acc + item.total_producto, 0);
 
     res.status(200).json({
@@ -393,7 +388,7 @@ export const getCarritoUsuario = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error al obtener el carrito:", error);
+    console.error("Error al obtener el carrito:", error);
     res.status(500).json({ error: "Error al obtener el carrito", details: error.message });
   }
 };
@@ -421,7 +416,7 @@ export const addProductoAlCarrito = async (req, res) => {
       );
 
       return res.status(200).json({
-        message: "Cantidad actualizada en el carrito ✅",
+        message: "Cantidad actualizada en el carrito",
         producto_id,
         usuario_id,
       });
@@ -433,14 +428,14 @@ export const addProductoAlCarrito = async (req, res) => {
       );
 
       return res.status(201).json({
-        message: "Producto agregado al carrito 🛒",
+        message: "Producto agregado al carrito",
         producto_id,
         usuario_id,
         cantidad: cantidad || 1,
       });
     }
   } catch (error) {
-    console.error("❌ Error al agregar al carrito:", error);
+    console.error("Error al agregar al carrito:", error);
     res.status(500).json({
       error: "Error al agregar producto al carrito",
       details: error.message,
@@ -470,13 +465,13 @@ export const updateCantidadCarrito = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "✅ Cantidad actualizada correctamente",
+      message: "Cantidad actualizada correctamente",
       usuario_id,
       producto_id,
       cantidad
     });
   } catch (error) {
-    console.error("❌ Error al actualizar cantidad:", error);
+    console.error("Error al actualizar cantidad:", error);
     res.status(500).json({
       error: "Error al actualizar cantidad en el carrito",
       details: error.message
@@ -497,16 +492,16 @@ export const deleteProductoCarrito = async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "❌ Producto no encontrado en el carrito" });
+      return res.status(404).json({ error: "Producto no encontrado en el carrito" });
     }
 
     res.status(200).json({
-      message: "🗑️ Producto eliminado del carrito correctamente",
+      message: "Producto eliminado del carrito correctamente",
       usuario_id,
       producto_id
     });
   } catch (error) {
-    console.error("❌ Error al eliminar producto del carrito:", error);
+    console.error("Error al eliminar producto del carrito:", error);
     res.status(500).json({
       error: "Error al eliminar producto del carrito",
       details: error.message
@@ -514,7 +509,6 @@ export const deleteProductoCarrito = async (req, res) => {
   }
 };
 
-// 🧹 Vaciar todo el carrito de un usuario
 export const clearCarrito = async (req, res) => {
   try {
     const { usuario_id } = req.body;
@@ -529,12 +523,12 @@ export const clearCarrito = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "🗑️ Carrito vaciado correctamente",
+      message: "Carrito vaciado correctamente",
       usuario_id,
       deletedItems: result.affectedRows
     });
   } catch (error) {
-    console.error("❌ Error al vaciar el carrito:", error);
+    console.error("Error al vaciar el carrito:", error);
     res.status(500).json({
       error: "Error al vaciar el carrito",
       details: error.message
@@ -558,8 +552,6 @@ export const clearCarritoByUserId = async (req, res) => {
       [usuario_id]
     );
 
-    console.log(`✅ Carrito vaciado para usuario ${usuario_id}: ${result.affectedRows} productos eliminados`);
-
     res.status(200).json({
       success: true,
       message: "Carrito vaciado correctamente",
@@ -568,7 +560,7 @@ export const clearCarritoByUserId = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("❌ Error al vaciar el carrito:", error);
+    console.error("Error al vaciar el carrito:", error);
     res.status(500).json({
       success: false,
       error: "Error al vaciar el carrito",
@@ -587,7 +579,6 @@ export const prepararPago = async (req, res) => {
       });
     }
 
-    // 1️⃣ Obtener el carrito del usuario
     const [carrito] = await connect.query(
       `SELECT 
         c.producto_id,
@@ -607,24 +598,20 @@ export const prepararPago = async (req, res) => {
       });
     }
 
-    // 2️Calcular el total
     const totalAmount = carrito.reduce((acc, item) => acc + item.total_producto, 0);
 
-    // 3Configuración de PayU (IMPORTANTE: Usar tus credenciales reales)
-    const merchantId = "508029";  // 🔹 Cambia por tu merchantId
-    const accountId = "512321";   // 🔹 Cambia por tu accountId
-    const apiKey = "4Vj8eK4rloUd272L48hsrarnUA";  // 🔹 Cambia por tu apiKey
+    const merchantId = "508029"; 
+    const accountId = "512321";  
+    const apiKey = "4Vj8eK4rloUd272L48hsrarnUA"; 
     const currency = "COP";
     const referenceCode = `REF_${usuario_id}_${Date.now()}`;
 
-    //  Generar signature (firma de seguridad)
     const signatureString = `${apiKey}~${merchantId}~${referenceCode}~${totalAmount}~${currency}`;
     const signature = crypto.createHash('md5').update(signatureString).digest('hex');
     const baseUrl = "https://innovatech-api-nodejs.onrender.com/api_v1"; 
     const responseUrl = `${baseUrl}/api/productos/carrito/respuesta-pago`;
     const confirmationUrl = `${baseUrl}/api/productos/carrito/confirmacion-pago`;
 
-    // 6️⃣ Devolver los datos para el formulario
     res.status(200).json({
       merchantId,
       accountId,
@@ -635,16 +622,16 @@ export const prepararPago = async (req, res) => {
       taxReturnBase: "0",
       currency,
       signature,
-      test: "1",  // 🔹 Cambiar a "0" en producción
+      test: "1",  
       email,
       responseUrl,
       confirmationUrl,
-      urlPayU: "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/"  // 🔹 URL de pruebas
-      // En producción usar: "https://checkout.payulatam.com/ppp-web-gateway-payu/"
+      urlPayU: "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" 
+     
     });
 
   } catch (error) {
-    console.error("❌ Error al preparar pago:", error);
+    console.error("Error al preparar pago:", error);
     res.status(500).json({
       error: "Error al preparar el pago",
       details: error.message
@@ -653,15 +640,9 @@ export const prepararPago = async (req, res) => {
 };
 
 
-// 🔹 Endpoint para recibir respuesta de PayU (página de respuesta)
 export const respuestaPago = async (req, res) => {
   try {
     const { transactionState, referenceCode, TX_VALUE } = req.query;
-
-    console.log("✅ Pago recibido:", { transactionState, referenceCode, TX_VALUE });
-
-    // Guardar en base de datos si lo necesitas
-    
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -697,23 +678,17 @@ export const respuestaPago = async (req, res) => {
       </html>
     `);
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("Error:", error);
     res.status(500).send("Error");
   }
 };
 
 
-
-// 🔹 Endpoint para confirmación de PayU (notificación automática)
 export const confirmacionPago = async (req, res) => {
   try {
-    console.log("🔔 Confirmación de PayU:", req.body);
-    
-    // Aquí validarías la firma y actualizarías tu base de datos
-    
-    res.status(200).send("OK");
+      res.status(200).send("OK");
   } catch (error) {
-    console.error("❌ Error en confirmación:", error);
+    console.error("Error en confirmación:", error);
     res.status(500).send("ERROR");
   }
 };
