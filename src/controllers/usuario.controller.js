@@ -36,7 +36,7 @@ export const showUsuarioId = async (req, res) => {
       user: result[0]
     });
   } catch (error) {
-    console.error("❌ Error obteniendo usuario:", error);
+    console.error("Error obteniendo usuario:", error);
     res.status(500).json({ 
       success: false,
       error: "Error al obtener usuario", 
@@ -193,7 +193,6 @@ export const solicitarRestablecimiento = async (req, res) => {
   try {
     const { correo } = req.body;
 
-    // Buscar usuario por correo
     const [result] = await connect.query("SELECT * FROM usuario WHERE correo = ?", [correo]);
     if (result.length === 0) {
       return res.status(404).json({ error: "Correo no registrado." });
@@ -201,14 +200,12 @@ export const solicitarRestablecimiento = async (req, res) => {
 
     const user = result[0];
 
-    // Crear token con duración de 30 min
     const token = jwt.sign(
       { id: user.id_usuario, correo: user.correo },
       process.env.JWT_SECRET,
       { expiresIn: "30m" }
     );
 
-    // 🔗 Enlace que abrirá directamente la app con el token
     const enlace = `https://innovatech-api.onrender.com/api_v1/deeplink?token=${token}`;
 
     const mensajeHTML = `
@@ -220,7 +217,7 @@ export const solicitarRestablecimiento = async (req, res) => {
     </head>
     <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding: 30px;">
-            <h2 style="color: #0a6069; text-align: center;">🔐 Recuperación de contraseña</h2>
+            <h2 style="color: #0a6069; text-align: center;">Recuperación de contraseña</h2>
             <p>Hola <strong>${user.primer_nombre}</strong>,</p>
             <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para continuar:</p>
             <p style="text-align: center; margin: 30px 0;">
@@ -237,7 +234,6 @@ export const solicitarRestablecimiento = async (req, res) => {
     </html>
     `;
 
-    // Configurar transporte de correo
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -250,13 +246,13 @@ export const solicitarRestablecimiento = async (req, res) => {
     await transporter.sendMail({
       from: `"Innovatech Dynamic" <${process.env.EMAIL_USER}>`,
       to: correo,
-      subject: "🔐 Recupera tu contraseña",
+      subject: "Recupera tu contraseña",
       html: mensajeHTML,
     });
 
     res.status(200).json({ message: "Correo de restablecimiento enviado con éxito." });
   } catch (error) {
-    console.error("❌ Error al enviar correo:", error);
+    console.error("Error al enviar correo:", error);
     res.status(500).json({ error: "Error al solicitar restablecimiento", details: error.message });
   }
 };
@@ -271,7 +267,6 @@ export const validarTokenReset = async (req, res) => {
   }
 };
 
-// POST - Cambiar contraseña
 export const restablecerPassword = async (req, res) => {
   try {
     const { token, nuevaPassword } = req.body;
